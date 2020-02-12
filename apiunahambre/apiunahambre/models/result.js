@@ -8,7 +8,7 @@ const createResult = function(){
  }
 
 }
-
+//Resultado json a enviar
 var Result = {
     'success': 'true',
     'error': null,
@@ -17,8 +17,5 @@ var Result = {
     'items': []
 }
 
-const getName = () => {
-    return 'Jim';
-  };
 
 module.exports = Result;

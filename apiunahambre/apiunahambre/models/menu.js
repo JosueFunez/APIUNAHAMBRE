@@ -1,10 +1,12 @@
 var jsonResult = require('../models/result')
 var db = require('../connection/conexion')
 
+
+  //Get para el platillo (Landing page)
   function getPlatillosFiltro ( filtroPlatillo,callback) {    
     db.query("SELECT * FROM Platillo WHERE Nombre LIKE '%"+filtroPlatillo+"%'",
         function (err, rows) {
-            //here we return the results of the query
+          
             callback(err, rows); 
         }
     );    

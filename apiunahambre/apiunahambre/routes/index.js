@@ -2,20 +2,14 @@ var express = require('express');
 var router = express.Router();
 var usuario = require('../models/usuario')
 var menu = require('../models/menu')
-// function getUsuarios(callback) {    
-//   db.query("SELECT * FROM Usuario",
-//       function (err, rows) {
-//           //here we return the results of the query
-//           callback(err, rows); 
-//       }
-//   );    
-// }
 
-/* GET home page. */
+
+
+//gets que redirigen a la ruta del servicio
+
 router.get('/', function(req, res, next) {   
-  
   usuario.insertUser(function (err, result){ 
-     //you might want to do something is err is not null...      
+        
     res.send(result)
   });
 });
