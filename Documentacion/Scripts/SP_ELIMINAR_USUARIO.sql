@@ -14,7 +14,7 @@ IF PV_MENSAJE IS NOT NULL THEN
     	DELETE FROM usuario WHERE usuario.idUsuario=PI_IDUSUARIO;
         DELETE FROM persona WHERE persona.idPersona = PI_IDPERSONA;
     ELSE 
-        SET PV_MENSAJE = CONCAT("El usuario ", PI_IDUSUARIO, "no existe.");
+        SET PV_MENSAJE = CONCAT("El usuario ", PI_IDUSUARIO, "no existe. ");
     END IF;
 END$$
 DELIMITER ;
