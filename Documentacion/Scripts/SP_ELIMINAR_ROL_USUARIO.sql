@@ -8,7 +8,7 @@ SP: BEGIN
 IF (EXISTS (SELECT usuario_has_rol.Usuario_idUsuario FROM usuario_has_rol WHERE Usuario_idUsuario = PI_IDUSUARIO ) AND EXISTS (SELECT usuario_has_rol.Rol_idRol FROM usuario_has_rol WHERE Rol_idRol = PI_IDROL)) THEN
     DELETE FROM usuario_has_rol WHERE Usuario_idUsuario=PI_IDUSUARIO;
 ELSE 
-        SET PV_MENSAJE = CONCAT("El rol de usuario ", PI_IDUSUARIO,PI_IDROL, "no existe.");
+        SET PV_MENSAJE = CONCAT("El rol de usuario ", PI_IDUSUARIO,PI_IDROL, "no existe. ");
 END IF;
 END$$
 DELIMITER ;
