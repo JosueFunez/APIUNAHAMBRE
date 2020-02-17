@@ -11,6 +11,13 @@ var db = require('../connection/conexion')
     );    
   }
   
+  function getUsuario(idUsuario, callback) {
+     db.query('SELECT * FROM Usuario Where idUsuario='+idUsuario, function(err, rows){
+            callback(err,rows);
+
+     });
+  }
+
   var insertUser = (callback) => { //Función flecha que realzia un insert y devuelve un jsonResult como respuesta.
     var sql = "INSERT INTO Usuario (idUsuario,Nombre_Usuario,Fecha_Ingreso,Contrasena,Foto_Perfil, Persona_idPersona)VALUES(3,'Use0r',NOW(),'asd',null,3)";
     db.query('SELECT * FROM Usuario', function(err, result){
@@ -25,5 +32,5 @@ var db = require('../connection/conexion')
 /* Para que puedan ser usadas externamente es necesario exportarlas */
 
 module.exports = {insertUser: insertUser,
-getUsuarios:getUsuarios};
+getUsuarios:getUsuarios, getUsuario:getUsuario};
 
