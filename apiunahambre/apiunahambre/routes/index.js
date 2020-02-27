@@ -3,7 +3,7 @@ var router = express.Router();
 var usuario = require('../models/usuario')
 var menu = require('../models/menu')
 var cors = require('cors')
-
+var jsonResult = require('../models/result')
 
 /*JFunez@13Feb2020
 
@@ -63,5 +63,52 @@ router.get('/api/filtroplatillo', cors(), function(req, res, next) {
     res.send(result)
   });
 });
+
+// Prueba getMenus
+router.get('/api/menus', cors(), function(req, res, next){
+
+  menu.getMenus(function(err, result) {
+   // estandar
+    let resultado = jsonResult
+    resultado.items = result
+    console.log(resultado)
+    res.send(resultado)
+  });
+});
+
+// Prueba getMenus con filtro por idRestaurante
+router.get('/api/menusRestaurantes', cors(), function (req, res, next) {
+
+  menu.getMenus_x_Restaurantes(req.body.idRestaurante, function (err, result) {
+    res.send(jsonResult)
+  });
+});
+/** Si no existe el usuario la propiedad item irà vacìa, de lo contrario, llevarà una row */
+router.post('/api/validarUsuario', cors(), function(req,res,next){
+  usuario.validarUsuario(req, function(err, result){
+      let resultado = jsonResult;
+      resultado.item = result;
+      res.send(resultado)
+  })
+})
+// PRUEBA PARA INSERTAR USUARIO
+router.post('/api/insertuser', cors(), function (req, res, next) {
+  usuario.postInsertarUsuario(req, function (err, result) {
+    let resultado = jsonResult;
+    resultado.error = result
+    /** 
+     * JFunez@27Feb2020
+     * (resultado.error[0].mensaje) 
+     * De esta forma debe acceder frontend al error, si el error es nulo el sp se ejecutò correctamente
+     * sino, que gestionen la excepciòn
+    */
+  //  
+
+    res.send(resultado)
+
+    
+  });
+});
+
 
 module.exports = router; 

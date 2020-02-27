@@ -28,9 +28,31 @@ var db = require('../connection/conexion')
   
   }
  
+// PRUEBA INSERTAR USUARIO 
+function postInsertarUsuario(req, callback) {
 
+  const query = `CALL SP_INSERTAR_USUARIO(?,?,?,?,?,?,?,@Mensaje);Select @Mensaje as mensaje`;
+  
+  db.query(query, [req.body.nombre, req.body.apellido, req.body.celular, req.body.sexo, req.body.numeroIdentidad, req.body.nombreUsuario, req.body.contrasena],
+    function (err, res) {
+      callback(err,res[1]);
+    }
+
+  );
+  
+  
+}
+
+function validarUsuario(req, callback){
+  const query = 'SELECT "" FROM Usuario WHERE Nombre_Usuario = ? AND Contrasena = ?'
+  db.query(query, [req.body.nombreUsuario, req.body.contrasena],function (err, res){    
+    callback(err, res)
+  })
+}
 /* Para que puedan ser usadas externamente es necesario exportarlas */
 
 module.exports = {insertUser: insertUser,
-getUsuarios:getUsuarios, getUsuario:getUsuario};
+getUsuarios:getUsuarios, getUsuario:getUsuario,
+  postInsertarUsuario:postInsertarUsuario,
+  validarUsuario: validarUsuario};
 
