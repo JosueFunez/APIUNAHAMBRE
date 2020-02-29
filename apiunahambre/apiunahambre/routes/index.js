@@ -64,7 +64,7 @@ router.get('/api/filtroplatillo', cors(), function(req, res, next) {
   });
 });
 
-// Prueba getMenus
+// getMenus
 router.get('/api/menus', cors(), function(req, res, next){
 
   menu.getMenus(function(err, result) {
@@ -76,10 +76,24 @@ router.get('/api/menus', cors(), function(req, res, next){
   });
 });
 
+// Get Lista Restaurantes
+// Devuelve la lista de los restaurantes en la DB
+router.get('/api/restaurantes', cors(), function (req, res, next) {
+  menu.getRestaurantes(function (err, result) {
+    // estandar
+    let resultado = jsonResult
+    resultado.items = result
+    console.log(resultado)
+    res.send(resultado)
+  });
+});
+
+
+
 // Prueba getMenus con filtro por idRestaurante
 router.get('/api/menusRestaurantes', cors(), function (req, res, next) {
 
-  menu.getMenus_x_Restaurantes(req.body.idRestaurante, function (err, result) {
+  menu.getMenusPorRestaurantes(req.body.idRestaurante, function (err, result) {
     res.send(jsonResult)
   });
 });
@@ -91,8 +105,18 @@ router.post('/api/validarUsuario', cors(), function(req,res,next){
       res.send(resultado)
   })
 })
-// PRUEBA PARA INSERTAR USUARIO
+/*Validar usuario con nombreUsuario o correo */
+router.post('/api/loginUsuario', cors(), function (req, res, next) {
+  usuario.loginUsuario(req, function (err, result) {
+    let resultado = jsonResult;
+    resultado.item = result;
+    res.send(resultado)
+  })
+})
+
+// INSERTAR USUARIO
 router.post('/api/insertuser', cors(), function (req, res, next) {
+  console.log(req.body);
   usuario.postInsertarUsuario(req, function (err, result) {
     let resultado = jsonResult;
     resultado.error = result

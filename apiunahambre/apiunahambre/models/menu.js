@@ -26,7 +26,7 @@ function getMenus(callback) {
 }
 
 // Get menus con filtro por Restaurante
-function getMenus_x_Restaurantes(Restaurante, callback) {
+function getMenusPorRestaurantes(Restaurante, callback) {
   const query = `SELECT * FROM Menu WHERE Restaurante_idRestaurante = ?`;
 
   db.query(query, [Restaurante],
@@ -37,7 +37,22 @@ function getMenus_x_Restaurantes(Restaurante, callback) {
   );
 }
 
+// Get Restaurantes
+// Se envia la lista de los restaurantes registrados
+function getRestaurantes(callback) {
+  const query = `SELECT idRestaurante, Nombre_Local FROM Restaurante`;
+
+  db.query(query,
+    function (err, rows) {
+      callback(err, rows);
+    }
+
+  );
+}
+
+
   module.exports = {getPlatillosFiltro : getPlatillosFiltro, 
                     getMenus: getMenus,
-                    getMenus_x_Restaurantes: getMenus_x_Restaurantes
+                    getMenusPorRestaurantes: getMenusPorRestaurantes,
+                    getRestaurantes: getRestaurantes
                   }

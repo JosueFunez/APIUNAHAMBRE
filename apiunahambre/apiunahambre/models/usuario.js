@@ -31,9 +31,9 @@ var db = require('../connection/conexion')
 // PRUEBA INSERTAR USUARIO 
 function postInsertarUsuario(req, callback) {
 
-  const query = `CALL SP_INSERTAR_USUARIO(?,?,?,?,?,?,?,@Mensaje);Select @Mensaje as mensaje`;
-  
-  db.query(query, [req.body.nombre, req.body.apellido, req.body.celular, req.body.sexo, req.body.numeroIdentidad, req.body.nombreUsuario, req.body.contrasena],
+  const query = `CALL SP_INSERTAR_USUARIO(?,?,?,?,?,?,?,?,@Mensaje);Select @Mensaje as mensaje`;
+  console.log(req.body);
+  db.query(query, [req.body.nombre, req.body.apellido, req.body.celular, req.body.sexo, req.body.numeroIdentidad, req.body.nombreUsuario, req.body.contrasena, req.body.correo],
     function (err, res) {
       callback(err,res[1]);
     }
@@ -43,16 +43,28 @@ function postInsertarUsuario(req, callback) {
   
 }
 
+// Validar Usuario Login
 function validarUsuario(req, callback){
   const query = 'SELECT "" FROM Usuario WHERE Nombre_Usuario = ? AND Contrasena = ?'
   db.query(query, [req.body.nombreUsuario, req.body.contrasena],function (err, res){    
     callback(err, res)
   })
 }
+
+// Login, validar usuario con nombreUsuario o correo
+function loginUsuario(req, callback){
+  const query = `CALL SP_VALIDAR_USUARIO(?,?,?, @Mensaje); SELECT @Mensaje AS mensaje`;
+  db.query(query, [req.body.nombreUsuario, req.body.correo, req.body.contrasena], function (err, res){
+    callback(err, res)
+  })
+}
+
 /* Para que puedan ser usadas externamente es necesario exportarlas */
 
 module.exports = {insertUser: insertUser,
 getUsuarios:getUsuarios, getUsuario:getUsuario,
   postInsertarUsuario:postInsertarUsuario,
-  validarUsuario: validarUsuario};
+  validarUsuario: validarUsuario,
+  loginUsuario: loginUsuario
+};
 
