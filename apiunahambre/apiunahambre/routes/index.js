@@ -4,7 +4,13 @@ var usuario = require('../models/usuario')
 var menu = require('../models/menu')
 var cors = require('cors')
 var jsonResult = require('../models/result')
+var app = express()
+var bodyParser = require('body-parser')
+var db = require('../connection/conexion')
 
+app.use(cors())
+app.use(bodyParser())
+// app.use(express.json());
 /*JFunez@13Feb2020
 
 Index.js
@@ -64,40 +70,7 @@ router.get('/api/filtroplatillo', cors(), function(req, res, next) {
   });
 });
 
-// getMenus
-router.get('/api/menus', cors(), function(req, res, next){
-
-  menu.getMenus(function(err, result) {
-   // estandar
-    let resultado = jsonResult
-    resultado.items = result
-    console.log(resultado)
-    res.send(resultado)
-  });
-});
-
-// Get Lista Restaurantes
-// Devuelve la lista de los restaurantes en la DB
-router.get('/api/restaurantes', cors(), function (req, res, next) {
-  menu.getRestaurantes(function (err, result) {
-    // estandar
-    let resultado = jsonResult
-    resultado.items = result
-    console.log(resultado)
-    res.send(resultado)
-  });
-});
-
-
-
-// Prueba getMenus con filtro por idRestaurante
-router.get('/api/menusRestaurantes', cors(), function (req, res, next) {
-
-  menu.getMenusPorRestaurantes(req.body.idRestaurante, function (err, result) {
-    res.send(jsonResult)
-  });
-});
-/** Si no existe el usuario la propiedad item irà vacìa, de lo contrario, llevarà una row */
+/**PRUEBA: Si no existe el usuario la propiedad item irà vacìa, de lo contrario, llevarà una row */
 router.post('/api/validarUsuario', cors(), function(req,res,next){
   usuario.validarUsuario(req, function(err, result){
       let resultado = jsonResult;
@@ -114,25 +87,80 @@ router.post('/api/loginUsuario', cors(), function (req, res, next) {
   })
 })
 
-// INSERTAR USUARIO
-router.post('/api/insertuser', cors(), function (req, res, next) {
-  console.log(req.body);
-  usuario.postInsertarUsuario(req, function (err, result) {
-    let resultado = jsonResult;
-    resultado.error = result
-    /** 
-     * JFunez@27Feb2020
-     * (resultado.error[0].mensaje) 
-     * De esta forma debe acceder frontend al error, si el error es nulo el sp se ejecutò correctamente
-     * sino, que gestionen la excepciòn
-    */
-  //  
 
-    res.send(resultado)
+
+
+app.listen(3001, function () {
+  console.log('CORS-enabled web server listening on port 3001')
+})
+
+// FINAL POST 
+app.post('/api/prueba', function (req, res, next) {
+  // const query = `SELECT * FROM Menu WHERE Restaurante_idRestaurante = 4`;
+  const query = `CALL SP_INSERTAR_USUARIO(?,?,?,?,?,?,?,?,@Mensaje);Select @Mensaje as mensaje`;
+  db.query(query, [req.body.nombre, req.body.apellido, req.body.celular, req.body.sexo, req.body.numeroIdentidad, req.body.nombreUsuario, req.body.contrasena, req.body.correo],
+    function (err, resultado) {
+      res.send(resultado[1]);
+    }
+
+  );
+});
+/**
+//      * CVasquez@29Feb2020
+//      *Si el mensaje está vacio entonces el usuario se registro correctamente, sino entonces el mensaje 
+//      *no estará vacio.
+//      * De esta forma debe acceder frontend al error, si el error es nulo el sp se ejecutò correctamente
+//      * sino, que gestionen la excepciòn
+//     */
+
+
+//FINAL Get Lista Restaurantes
+// Devuelve la lista de los restaurantes en la DB
+app.get('/api/restaurantes', function (req, res, next) {
+  // Get Restaurantes
+  // Se envia la lista de los restaurantes registrados
+    const query = `SELECT idRestaurante, Nombre_Local FROM Restaurante`;
+
+    db.query(query,
+      function (err, result) {
+        res.send(result);
+      }
+
+    );
+});
+
+// FINAL getMenus
+app.get('/api/menus', cors(), function (req, res, next) {
+
+  const query = `SELECT * FROM Menu`;
+  db.query(query,
+    function (err, rows) {
+      console.log(rows)
+      res.send(rows)
+    })
+});
+
+
+
+// INSERTAR USUARIO
+// router.post('/api/insertuser', cors(), function (req, res, next) {
+//   connsole.log("asd")
+//   usuario.postInsertarUsuario(req, function (err, result) {
+//     let resultado = jsonResult;
+//     resultado.error = result
+//     /** 
+//      * JFunez@27Feb2020
+//      * (resultado.error[0].mensaje) 
+//      * De esta forma debe acceder frontend al error, si el error es nulo el sp se ejecutò correctamente
+//      * sino, que gestionen la excepciòn
+//     */
+//   //  
+
+//     res.send(resultado)
 
     
-  });
-});
+//   });
+// });
 
 
 module.exports = router; 
