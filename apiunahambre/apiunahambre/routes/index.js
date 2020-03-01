@@ -150,6 +150,15 @@ app.post('/api/validarUsuario', cors(), function (req, res, next) {
     
 //   });
 // });
+/**PRUEBA: Si no existe el usuario la propiedad item irà vacìa, de lo contrario, llevarà una row */
+app.post('/api/validarUsuario', cors(), function (req, res, next) {
+  const query = 'SELECT "" FROM Usuario WHERE Nombre_Usuario = ? AND Contrasena = ?'
+  db.query(query, [req.body.nombreUsuario, req.body.contrasena], 
+    function (err, result) {
+    res.send(result)
+  })
+})
+
 
 
 module.exports = router; 
