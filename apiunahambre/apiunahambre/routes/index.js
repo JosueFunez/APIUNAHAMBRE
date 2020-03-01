@@ -10,7 +10,6 @@ var db = require('../connection/conexion')
 
 app.use(cors())
 app.use(bodyParser())
-// app.use(express.json());
 /*JFunez@13Feb2020
 
 Index.js
@@ -70,24 +69,6 @@ router.get('/api/filtroplatillo', cors(), function(req, res, next) {
   });
 });
 
-/**PRUEBA: Si no existe el usuario la propiedad item irà vacìa, de lo contrario, llevarà una row */
-router.post('/api/validarUsuario', cors(), function(req,res,next){
-  usuario.validarUsuario(req, function(err, result){
-      let resultado = jsonResult;
-      resultado.item = result;
-      res.send(resultado)
-  })
-})
-/*Validar usuario con nombreUsuario o correo */
-router.post('/api/loginUsuario', cors(), function (req, res, next) {
-  usuario.loginUsuario(req, function (err, result) {
-    let resultado = jsonResult;
-    resultado.item = result;
-    res.send(resultado)
-  })
-})
-
-
 
 
 app.listen(3001, function () {
@@ -95,12 +76,13 @@ app.listen(3001, function () {
 })
 
 // FINAL POST 
-app.post('/api/prueba', function (req, res, next) {
-  // const query = `SELECT * FROM Menu WHERE Restaurante_idRestaurante = 4`;
+app.post('/api/insertuser', function (req, res, next) {
   const query = `CALL SP_INSERTAR_USUARIO(?,?,?,?,?,?,?,?,@Mensaje);Select @Mensaje as mensaje`;
   db.query(query, [req.body.nombre, req.body.apellido, req.body.celular, req.body.sexo, req.body.numeroIdentidad, req.body.nombreUsuario, req.body.contrasena, req.body.correo],
-    function (err, resultado) {
-      res.send(resultado[1]);
+    function (err, resultado, rows) {
+
+      // console.log(resultado[1][0].mensaje)
+      res.send(resultado);
     }
 
   );
@@ -120,7 +102,6 @@ app.get('/api/restaurantes', function (req, res, next) {
   // Get Restaurantes
   // Se envia la lista de los restaurantes registrados
     const query = `SELECT idRestaurante, Nombre_Local FROM Restaurante`;
-
     db.query(query,
       function (err, result) {
         res.send(result);
@@ -140,6 +121,14 @@ app.get('/api/menus', cors(), function (req, res, next) {
     })
 });
 
+/**PRUEBA: Si no existe el usuario la propiedad item irà vacìa, de lo contrario, llevarà una row */
+app.post('/api/validarUsuario', cors(), function (req, res, next) {
+  const query = 'SELECT "" FROM Usuario WHERE Nombre_Usuario = ? AND Contrasena = ?'
+  db.query(query, [req.body.nombreUsuario, req.body.contrasena], 
+    function (err, result) {
+    res.send(result)
+  })
+})
 
 
 // INSERTAR USUARIO
