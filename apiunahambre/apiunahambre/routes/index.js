@@ -79,16 +79,18 @@ app.listen(3001, function () {
 app.post('/api/insertuser', function (req, res, next) {
   const query = `CALL SP_INSERTAR_USUARIO(?,?,?,?,?,?,?,?,@Mensaje);Select @Mensaje as mensaje`;
   db.query(query, [req.body.nombre, req.body.apellido, req.body.celular, req.body.sexo, req.body.numeroIdentidad, req.body.nombreUsuario, req.body.contrasena, req.body.correo],
-    function (err, resultado, rows) {
+    function (err, result, rows) {
+      
+      let resultado = jsonResult;
+      resultado.error = result
 
-      // console.log(resultado[1][0].mensaje)
       res.send(resultado);
     }
 
   );
 });
 /**
-//      * CVasquez@29Feb2020
+//      * CVasquez@02Mar2020
 //      *Si el mensaje está vacio entonces el usuario se registro correctamente, sino entonces el mensaje 
 //      *no estará vacio.
 //      * De esta forma debe acceder frontend al error, si el error es nulo el sp se ejecutò correctamente
@@ -104,7 +106,11 @@ app.get('/api/restaurantes', function (req, res, next) {
     const query = `SELECT idRestaurante, Nombre_Local FROM Restaurante`;
     db.query(query,
       function (err, result) {
-        res.send(result);
+
+        let resultado = jsonResult;
+        resultado.items = result
+
+        res.send(resultado);
       }
 
     );
@@ -115,9 +121,12 @@ app.get('/api/menus', cors(), function (req, res, next) {
 
   const query = `SELECT * FROM Menu`;
   db.query(query,
-    function (err, rows) {
-      console.log(rows)
-      res.send(rows)
+    function (err, result) {
+
+      let resultado = jsonResult;
+      resultado.items = result
+
+      res.send(resultado)
     })
 });
 
@@ -150,6 +159,21 @@ app.post('/api/validarUsuario', cors(), function (req, res, next) {
     
 //   });
 // });
+// POST PARA LOGIN
+app.post('/api/login', cors(), function (req, res, next) {
+  const query = 'CALL SP_LOGIN(?, ?, @Mensaje); SELECT @Mensaje AS mensaje;';
+  db.query(query, [req.body.usuario, req.body.contrasena], 
+    function (err, result) {
+
+      let resultado = jsonResult;
+      resultado.error = result
+
+      res.send(resultado)
+    })
+})
+
+
+
 /**PRUEBA: Si no existe el usuario la propiedad item irà vacìa, de lo contrario, llevarà una row */
 app.post('/api/validarUsuario', cors(), function (req, res, next) {
   const query = 'SELECT "" FROM Usuario WHERE Nombre_Usuario = ? AND Contrasena = ?'
