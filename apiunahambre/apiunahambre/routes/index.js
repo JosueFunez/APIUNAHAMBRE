@@ -171,6 +171,11 @@ app.post('/api/login', cors(), function (req, res, next) {
       res.send(resultado)
     })
 })
+//      * CVasquez@02Mar2020
+//      *El error llevará el mensaje para la consulta
+//      *Indicará si se concede o no el acceso al usuario 
+//     */
+
 
 
 
