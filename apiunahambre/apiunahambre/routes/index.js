@@ -189,5 +189,25 @@ app.post('/api/validarUsuario', cors(), function (req, res, next) {
 })
 
 
+/** JFunez@03MAR2020
+ * 
+ * Se devuelve un arreglo en el campo items si el usuario tiene privilegio para dicha acción, de lo contrario, items.length = 0
+ */
+
+app.post('/api/validarPrivilegio', cors(), function(req,res,next){
+  const query = "SELECT * FROM Rol_Privilegio RP INNER JOIN Usuario_has_Rol UR ON RP.Rol_idRol = UR.Rol_idRol WHERE UR.Usuario_idUsuario = ? AND RP.Privilegio_idPrivilegios = ? AND RP.Rol_idRol = ?"
+  db.query(query, [req.body.idUsuario, req.body.idPrivilegio, req.body.idRol],
+    function(err, rows){
+      if(err) throw err
+      
+      let resultado = jsonResult
+      resultado.items = rows
+      res.send(resultado)
+    }
+    )
+})
+
+
+
 
 module.exports = router; 
