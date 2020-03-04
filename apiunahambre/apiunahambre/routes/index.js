@@ -61,19 +61,19 @@ router.post('/api/getUsuario', cors(),  function(req,res,next){
 
 });
 
-router.get('/api/filtroplatillo', cors(), function(req, res, next) {   
-  
-  menu.getPlatillosFiltro('p', function(err, result){
 
-    res.send(result)
-  });
+
+/** CVasquez@04MAR2020
+ *
+ * Obtiene el puerto asignado por el servicio de nube o se le asigna el puerto 3001
+ */
+app.set('port', process.env.PORT || 3001);
+
+// app.listen(3001, )
+
+app.listen(app.get('port'), function () {
+  console.log('CORS-enabled web server listening on port ',app.get('port'));
 });
-
-
-
-app.listen(3001, function () {
-  console.log('CORS-enabled web server listening on port 3001')
-})
 
 // FINAL POST 
 app.post('/api/insertuser', function (req, res, next) {
@@ -130,6 +130,27 @@ app.get('/api/menus', cors(), function (req, res, next) {
     })
 });
 
+
+/** CVasquez@04MAR2020
+ *
+ * Se devuelve un arreglo en el campo items con los platillos existentes en la base de datos
+ */
+
+app.get('/api/platillos', cors(), function (req, res, next) {
+
+  const query = `SELECT * FROM Platillos`;
+  db.query(query,
+    function (err, result) {
+
+      let resultado = jsonResult;
+      resultado.items = result
+
+      res.send(resultado)
+    })
+});
+
+
+
 /**PRUEBA: Si no existe el usuario la propiedad item irà vacìa, de lo contrario, llevarà una row */
 app.post('/api/validarUsuario', cors(), function (req, res, next) {
   const query = 'SELECT "" FROM Usuario WHERE Nombre_Usuario = ? AND Contrasena = ?'
@@ -140,25 +161,6 @@ app.post('/api/validarUsuario', cors(), function (req, res, next) {
 })
 
 
-// INSERTAR USUARIO
-// router.post('/api/insertuser', cors(), function (req, res, next) {
-//   connsole.log("asd")
-//   usuario.postInsertarUsuario(req, function (err, result) {
-//     let resultado = jsonResult;
-//     resultado.error = result
-//     /** 
-//      * JFunez@27Feb2020
-//      * (resultado.error[0].mensaje) 
-//      * De esta forma debe acceder frontend al error, si el error es nulo el sp se ejecutò correctamente
-//      * sino, que gestionen la excepciòn
-//     */
-//   //  
-
-//     res.send(resultado)
-
-    
-//   });
-// });
 // POST PARA LOGIN
 app.post('/api/login', cors(), function (req, res, next) {
   const query = 'CALL SP_LOGIN(?, ?, @Mensaje); SELECT @Mensaje AS mensaje;';
@@ -179,14 +181,39 @@ app.post('/api/login', cors(), function (req, res, next) {
 
 
 
-/**PRUEBA: Si no existe el usuario la propiedad item irà vacìa, de lo contrario, llevarà una row */
-app.post('/api/validarUsuario', cors(), function (req, res, next) {
-  const query = 'SELECT "" FROM Usuario WHERE Nombre_Usuario = ? AND Contrasena = ?'
+/**PRUEBA: Si no existe el usuario la propiedad item ira vacìa, de lo contrario, llevarà una row */
+app.post('/api/obtenerUsuario', cors(), function (req, res, next) {
+  const query = 'SELECT * FROM Usuario WHERE Nombre_Usuario = ? AND Contrasena = ?'
   db.query(query, [req.body.nombreUsuario, req.body.contrasena], 
-    function (err, result) {
-    res.send(result)
+    function (err, rows) {
+     let resultado = jsonResult
+     if (err) resultado.error = err;
+     resultado.items = rows
+    res.send(resultado)
   })
 })
+
+
+/** JFunez@03MAR2020
+ * 
+ * Se devuelve un arreglo en el campo items si el usuario tiene privilegio para dicha acción, de lo contrario, items.length = 0
+ */ 
+
+
+
+app.post('/api/validarPrivilegio', cors(), function(req,res,next){
+  const query = "SELECT * FROM Rol_Privilegio RP INNER JOIN Usuario_has_Rol UR ON RP.Rol_idRol = UR.Rol_idRol WHERE UR.Usuario_idUsuario = ? AND RP.Privilegio_idPrivilegios = ? AND RP.Rol_idRol = ?"
+  db.query(query, [req.body.idUsuario, req.body.idPrivilegio, req.body.idRol],
+    function(err, rows){
+      if(err) throw err
+      
+      let resultado = jsonResult
+      resultado.items = rows
+      res.send(resultado)
+    }
+    )
+})
+
 
 
 
