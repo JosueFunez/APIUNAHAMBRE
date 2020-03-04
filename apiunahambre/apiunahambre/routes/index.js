@@ -179,8 +179,6 @@ app.post('/api/login', cors(), function (req, res, next) {
 //     */
 
 
-
-
 /**PRUEBA: Si no existe el usuario la propiedad item ira vacìa, de lo contrario, llevarà una row */
 app.post('/api/obtenerUsuario', cors(), function (req, res, next) {
   const query = 'SELECT * FROM Usuario WHERE Nombre_Usuario = ? AND Contrasena = ?'
@@ -198,8 +196,6 @@ app.post('/api/obtenerUsuario', cors(), function (req, res, next) {
  * 
  * Se devuelve un arreglo en el campo items si el usuario tiene privilegio para dicha acción, de lo contrario, items.length = 0
  */ 
-
-
 
 app.post('/api/validarPrivilegio', cors(), function(req,res,next){
   const query = "SELECT * FROM Rol_Privilegio RP INNER JOIN Usuario_has_Rol UR ON RP.Rol_idRol = UR.Rol_idRol WHERE UR.Usuario_idUsuario = ? AND RP.Privilegio_idPrivilegios = ? AND RP.Rol_idRol = ?"
