@@ -8,6 +8,9 @@ var app = express()
 var bodyParser = require('body-parser')
 var db = require('../connection/conexion')
 
+var nodemailer = require('nodemailer')
+
+
 app.use(cors())
 app.use(bodyParser())
 /*JFunez@13Feb2020
@@ -103,7 +106,7 @@ app.post('/api/insertuser', function (req, res, next) {
 app.get('/api/restaurantes', function (req, res, next) {
   // Get Restaurantes
   // Se envia la lista de los restaurantes registrados
-    const query = `SELECT idRestaurante, Nombre_Local FROM Restaurante`;
+    const query = `SELECT * FROM Restaurante`;
     db.query(query,
       function (err, result) {
 
@@ -138,7 +141,7 @@ app.get('/api/menus', cors(), function (req, res, next) {
 
 app.get('/api/platillos', cors(), function (req, res, next) {
 
-  const query = `SELECT * FROM Platillos`;
+  const query = `SELECT * FROM Platillo`;
   db.query(query,
     function (err, result) {
 
@@ -211,6 +214,97 @@ app.post('/api/validarPrivilegio', cors(), function(req,res,next){
 })
 
 
+
+/** CVásquez@08MAR2020
+ *
+ * Si el correo ingresado existe, entonces se le enviará la contraseña al usuario a dicho correo
+ * devuelve un 1 o 0  para frontend
+ */
+//  RECUPERAR CONTRASEÑA
+// Se crea el objeto transporte 
+var transporter = nodemailer.createTransport({
+  host: 'smtp.ethereal.email',
+  port: 587,
+  auth: {
+    user: 'kali.wilderman@ethereal.email',
+    pass: 'Ra8PP1PutCW4ZSyvnt'
+  }
+});
+
+
+app.post('/api/checkcorreo', cors(), function (req, res, next) {
+  const query = 'CALL SP_VERIFICAR_CORREO(?, @Mensaje); SELECT @MENSAJE AS mensaje';
+  db.query(query, [req.body.correo],
+    function (err, result) {
+      let resultado = jsonResult;
+      resultado.error = result
+
+      if (resultado.error[1][0].mensaje != null) {
+        // console.log('El correo existe')
+        // console.log('LA CONTRASEÑA ES : ' + resultado.error[1][0].mensaje)
+
+        // PROCESO DE ENVIAR CORREO
+        // ${ resultado.error[1][0].mensaje }
+        var mensaje = `
+              <div style="background-color: #dcd6f7; width: 50%; height: 100%; text-align: center; justify-content: center; border-radius: 1rem; padding: 1rem;">
+                  <div>
+                      <h3>Tu contraseña Unahambre</h3>
+                      <p>Has solicitado recuperar tu contraseña</p>
+                      <p style="justify-content: center;">
+                          Tu contraseña es:
+                      </p>
+                      <div">
+                          
+                          <h4 style="padding: 1rem; background-color: azure;">${ resultado.error[1][0].mensaje }</h4>
+
+                      </div>
+                    
+                      <div>
+                          <a href="#" style="text-decoration: none; background-color: #f8615a; padding: .5rem; color: white; border-radius: 0.4rem;">Login UNAHAMBRE</a>
+                      </div>
+                      <p>Servicios UNAHAMBRE.</p>
+                      <P>Gracias.</P>
+                  </div>
+              </div>
+        `;
+
+        var mailOptions = {
+          from: 'soporte.unahambre@gmail.com',
+          to: req.body.correo,
+          subject: 'Asunto del correo',
+          text: mensaje,
+          html: mensaje
+        }
+        
+      transporter.sendMail(mailOptions, function(error, info){
+          if(error) {
+              console.log(error)
+          } else {
+              console.log('Email enviado: ' + info.response)
+          }
+          })
+
+        res.send('1')
+      } else {
+        console.log('El correo no existe')
+        res.send('0')
+      }
+    })
+})
+
+// PRUEBA PARA MARIO::: Retorna todos los usuario en la base de datos 
+app.get('/api/getusuarios', cors(), function (req, res, next) {
+
+  const query = `SELECT * FROM Usuario`;
+  db.query(query,
+    function (err, result) {
+
+      let resultado = jsonResult;
+      resultado.items = result
+
+      res.send(resultado)
+    })
+});
 
 
 module.exports = router; 
