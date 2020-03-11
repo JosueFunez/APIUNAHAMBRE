@@ -317,9 +317,33 @@ app.get('/api/getusuarios', cors(), function (req, res, next) {
 });
 
 
-// PRUEBA: USUARIO POR TIPO ROL
+
+/** CVásquez@08MAR2020
+ * Devuelve los usuarios Filtrados por rol, 0:admin, 1:Propietario local, 2:cliente.
+ * Si el parametro idRol es incorrecto, items estará vacio y error indicará que ese rol no existe.
+ */
+// USUARIO POR TIPO ROL
 app.get('/api/usuario-rol', cors(), function (req, res, next) {
-  const query = `CALL SP_FILTRO_USUARIO(?,?, @MENSAJE); SELECT @MENSAJE AS mensaje;`,
+  const query = `CALL SP_ADMIN_FILTRO_CLIENTES_ROL(?, @MENSAJE);`
+  db.query(query, [req.body.idRol], 
+    function (err, result) {
+      let resultado = jsonResult
+      if (err) resultado.error = err;
+      if (result == undefined) {
+        resultado.items = null;
+        res.send(resultado);
+      } else {
+        if (req.body.idRol > 2) {
+          resultado.error = 'No existe el rol ingresado'
+          res.send(resultado)
+        }else{
+          resultado.error = err;
+          resultado.items = result;
+          res.send(resultado);
+        }
+      }
+      
+    })
 })
 
 
@@ -351,6 +375,26 @@ app.post('/api/cambiar_contrasena', cors(), function (req, res, next) {
     })
 })
 
+
+// PRUEBA: BORRAR LOCAL: AUN NO TERMINADA
+app.post('/api/admin/borrar-local', cors(), function (req, res, next) {
+
+  const query = 'DELETE FROM Restaurante WHERE idRestaurante = ?'
+  db.query(query, [req.body.idRestaurante], 
+    function (err, result) {
+
+      if (err) resultado.error = err;
+      if (result == undefined) {
+        resultado.items = null;
+        res.send(resultado);
+      } else {
+        resultado.error = result;
+        // resultado.items = null;
+        res.send(resultado);
+
+      }
+    })
+})
 
 
 /** CVásquez@10MAR2020
