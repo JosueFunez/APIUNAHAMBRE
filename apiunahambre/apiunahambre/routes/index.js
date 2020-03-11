@@ -53,19 +53,6 @@ router.get('/api/gets', cors(), function(req, res, next) {
   });
 });
 
-//Ejemplo de una petición POST en la cual podemos manipular la información enviada por el cliente por medio del parámetro "req"
-
-router.post('/api/getUsuario', cors(),  function(req,res,next){
-
-  usuario.getUsuario(req.body.Usuario, function(err, result){
-
-    res.send(result);
-})
-
-});
-
-
-
 /** CVasquez@04MAR2020
  *
  * Obtiene el puerto asignado por el servicio de nube o se le asigna el puerto 3001
@@ -78,7 +65,16 @@ app.listen(app.get('port'), function () {
   console.log('CORS-enabled web server listening on port ',app.get('port'));
 });
 
-// FINAL POST 
+
+
+/**
+* CVasquez@02Mar2020
+*Si el mensaje está vacio entonces el usuario se registro correctamente, sino entonces el mensaje
+*no estará vacio.
+* De esta forma debe acceder frontend al error, si el error es nulo el sp se ejecutò correctamente
+* sino, que gestionen la excepciòn
+*/
+// FINAL POST Registrar usuarios
 app.post('/api/insertuser', function (req, res, next) {
   const query = `CALL SP_INSERTAR_USUARIO(?,?,?,?,?,?,?,?,@Mensaje);Select @Mensaje as mensaje`;
   db.query(query, [req.body.nombre, req.body.apellido, req.body.celular, req.body.sexo, req.body.numeroIdentidad, req.body.nombreUsuario, req.body.contrasena, req.body.correo],
@@ -92,20 +88,13 @@ app.post('/api/insertuser', function (req, res, next) {
 
   );
 });
-/**
-//      * CVasquez@02Mar2020
-//      *Si el mensaje está vacio entonces el usuario se registro correctamente, sino entonces el mensaje 
-//      *no estará vacio.
-//      * De esta forma debe acceder frontend al error, si el error es nulo el sp se ejecutò correctamente
-//      * sino, que gestionen la excepciòn
-//     */
+
 
 
 //FINAL Get Lista Restaurantes
 // Devuelve la lista de los restaurantes en la DB
 app.get('/api/restaurantes', function (req, res, next) {
-  // Get Restaurantes
-  // Se envia la lista de los restaurantes registrados
+
     const query = `SELECT * FROM Restaurante`;
     db.query(query,
       function (err, result) {
@@ -117,6 +106,25 @@ app.get('/api/restaurantes', function (req, res, next) {
       }
 
     );
+});
+
+app.post('/api/restauranteUsuario', function (req, res, next) {
+  const query = `SELECT * FROM Restaurante WHERE Usuario_idUsuario = `+req.body.idUsuario;
+  db.query(query,
+    function (err, result) {
+      let resultado = jsonResult;
+      if (err) resultado.error = err;
+      if(result==undefined){
+        resultado.items = null;
+        res.send(resultado);
+      } else {
+        resultado.error = null;
+        resultado.items = result;
+        res.send(resultado);
+      }
+    }
+
+  );
 });
 
 // FINAL getMenus
@@ -164,6 +172,11 @@ app.post('/api/validarUsuario', cors(), function (req, res, next) {
 })
 
 
+//      * CVasquez@02Mar2020
+//      *El error llevará el mensaje para la consulta
+//      *Indicará si se concede o no el acceso al usuario 
+//     */
+
 // POST PARA LOGIN
 app.post('/api/login', cors(), function (req, res, next) {
   const query = 'CALL SP_LOGIN(?, ?, @Mensaje); SELECT @Mensaje AS mensaje;';
@@ -176,10 +189,7 @@ app.post('/api/login', cors(), function (req, res, next) {
       res.send(resultado)
     })
 })
-//      * CVasquez@02Mar2020
-//      *El error llevará el mensaje para la consulta
-//      *Indicará si se concede o no el acceso al usuario 
-//     */
+
 
 
 /**PRUEBA: Si no existe el usuario la propiedad item ira vacìa, de lo contrario, llevarà una row */
@@ -226,8 +236,8 @@ var transporter = nodemailer.createTransport({
   host: 'smtp.ethereal.email',
   port: 587,
   auth: {
-    user: 'kali.wilderman@ethereal.email',
-    pass: 'Ra8PP1PutCW4ZSyvnt'
+    user: 'emmet.mohr@ethereal.email',
+    pass: '9tXyaN9gZMcp4mc6Bh'
   }
 });
 
@@ -306,5 +316,78 @@ app.get('/api/getusuarios', cors(), function (req, res, next) {
     })
 });
 
+
+// PRUEBA: USUARIO POR TIPO ROL
+app.get('/api/usuario-rol', cors(), function (req, res, next) {
+  const query = `CALL SP_FILTRO_USUARIO(?,?, @MENSAJE); SELECT @MENSAJE AS mensaje;`,
+})
+
+
+// PRUEBA:BORRAR LUEGO
+app.post('/api/comprobar_contrasena', cors(), function (req, res, next) {
+  const query = `CALL SP_COMPROBAR_CONTRASENA(?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
+  db.query(query, [req.body.usuario, req.body.contrasena], 
+    function (err, result){
+      let resultado = jsonResult
+      resultado.error = result
+      res.send(resultado)
+    })
+})
+
+
+
+/** CVásquez@08MAR2020
+ * cambio contraseña para los usuarios, recibe: usuario, contrasena, nueva_contrasena
+ *Si se logro el completar el cambio entonces el mensaje sera null, caso contrario el mensaje no estará null
+ */
+app.post('/api/cambiar_contrasena', cors(), function (req, res, next) {
+  const query = `CALL SP_CAMBIAR_CONTRASENA(?, ?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
+
+  db.query(query, [req.body.usuario, req.body.contrasena, req.body.nueva_contrasena],
+    function (err, result) {
+      let resultado = jsonResult
+      resultado.error = result
+      res.send(resultado)
+    })
+})
+
+
+
+/** CVásquez@10MAR2020
+*Un admin puede desde la pagina de administración de usuarios modificar un menu
+*resultado.error llevará los datos del resultado de la query
+* Recibe como parametros idMenu, nombreMenu y foto, dichos parametros pueden ser nulos si no se
+* desea cambiar algo del menú.
+*/
+app.put('/api/admin/modificar_menus', cors(), function (req, res, next) {
+  const query = `CALL SP_ADMIN_EDITAR_MENU(?, ?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
+  db.query(query, [req.body.idMenu, req.body.nombreMenu, req.body.foto], 
+    function (err, result) {
+      let resultado = jsonResult
+      // resultado.error = result
+
+      if (err) resultado.error = err;
+      if (result == undefined) {
+        resultado.items = null;
+        res.send(resultado);
+      } else {
+        resultado.error = result;
+        resultado.items = null;
+        res.send(resultado);
+
+      }
+    })
+
+})
+
+
+/**
+ * Servico para eliminar usuarios 
+ * Servicio para cambiar el rol de un usuario
+ * Servicio para cambiar datos de un menu, platillo
+ * Servicio para eliminar local, activar local
+ * Servicion para filtrar restaurante por idUsuario  /api/restauranteUsuario
+ * Servicio para camniar contraseña : LISTO 
+ */
 
 module.exports = router; 
