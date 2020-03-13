@@ -37,21 +37,6 @@ req: representa la petición (Request)
 res: representa la respuesta a enviar (Result)
 next: representa la siguiente funciíon callback a llamar (Uso del middleware) en próximos sprint haremos uso de este parámetro
 */
-router.get('/', cors(), function(req, res, next) {  //Dirección recibida desde frontend (/) y función callback  
-  usuario.insertUser(function (err, result){ //Llamado a la función insertUser del modelo usuario
-        
-    res.send(result) //Envío a frontend del resultado obtenido por la función insertUser
-  });
-});
-
-router.get('/api/gets', cors(), function(req, res, next) {   
- 
-  usuario.getUsuarios(function (err, result){ 
-         
-     res.send(result)
-
-  });
-});
 
 /** CVasquez@04MAR2020
  *
@@ -226,11 +211,10 @@ app.post('/api/validarPrivilegio', cors(), function(req,res,next){
 
 
 /** CVásquez@08MAR2020
- *
+ * RECUPERAR CONTRASEÑA
  * Si el correo ingresado existe, entonces se le enviará la contraseña al usuario a dicho correo
  * devuelve un 1 o 0  para frontend
  */
-//  RECUPERAR CONTRASEÑA
 // Se crea el objeto transporte 
 var transporter = nodemailer.createTransport({
   host: 'smtp.ethereal.email',
@@ -240,8 +224,6 @@ var transporter = nodemailer.createTransport({
     pass: '9tXyaN9gZMcp4mc6Bh'
   }
 });
-
-
 app.post('/api/checkcorreo', cors(), function (req, res, next) {
   const query = 'CALL SP_VERIFICAR_CORREO(?, @Mensaje); SELECT @MENSAJE AS mensaje';
   db.query(query, [req.body.correo],
@@ -302,7 +284,9 @@ app.post('/api/checkcorreo', cors(), function (req, res, next) {
     })
 })
 
-// PRUEBA PARA MARIO::: Retorna todos los usuario en la base de datos 
+/** CVásquez@08MAR2020
+ * Devuelve todos los usuarios en la DB.
+ */
 app.get('/api/getusuarios', cors(), function (req, res, next) {
 
   const query = `SELECT * FROM Usuario`;
@@ -317,12 +301,11 @@ app.get('/api/getusuarios', cors(), function (req, res, next) {
 });
 
 
-
 /** CVásquez@08MAR2020
  * Devuelve los usuarios Filtrados por rol, 0:admin, 1:Propietario local, 2:cliente.
  * Si el parametro idRol es incorrecto, items estará vacio y error indicará que ese rol no existe.
  */
-// USUARIO POR TIPO ROL
+// FILTRO USUARIO POR TIPO ROL
 app.get('/api/usuario-rol', cors(), function (req, res, next) {
   const query = `CALL SP_ADMIN_FILTRO_CLIENTES_ROL(?, @MENSAJE);`
   db.query(query, [req.body.idRol], 
@@ -347,24 +330,13 @@ app.get('/api/usuario-rol', cors(), function (req, res, next) {
 })
 
 
-// PRUEBA:BORRAR LUEGO
-app.post('/api/comprobar_contrasena', cors(), function (req, res, next) {
-  const query = `CALL SP_COMPROBAR_CONTRASENA(?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
-  db.query(query, [req.body.usuario, req.body.contrasena], 
-    function (err, result){
-      let resultado = jsonResult
-      resultado.error = result
-      res.send(resultado)
-    })
-})
-
-
-
 /** CVásquez@08MAR2020
- * cambio contraseña para los usuarios, recibe: usuario, contrasena, nueva_contrasena
+ * Cambio de contraseña para los usuarios, recibe: usuario, contrasena, nueva_contrasena
  *Si se logro el completar el cambio entonces el mensaje sera null, caso contrario el mensaje no estará null
+ *También se comprueba si la contraseña actual es la correcta, sino el cambio no se realiza
+ *error. mensaje llevará la respuesta para frontend.
  */
-app.post('/api/cambiar_contrasena', cors(), function (req, res, next) {
+app.post('/api/cambiar-contrasena', cors(), function (req, res, next) {
   const query = `CALL SP_CAMBIAR_CONTRASENA(?, ?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
 
   db.query(query, [req.body.usuario, req.body.contrasena, req.body.nueva_contrasena],
@@ -376,12 +348,16 @@ app.post('/api/cambiar_contrasena', cors(), function (req, res, next) {
 })
 
 
-// PRUEBA: BORRAR LOCAL: AUN NO TERMINADA
-app.post('/api/admin/borrar-local', cors(), function (req, res, next) {
-
-  const query = 'DELETE FROM Restaurante WHERE idRestaurante = ?'
+/** CVásquez@13MAR2020
+ *Se borra el local asi como los menús y platillos que dicho local tenga.
+ *Se recibe el idRestaurante.
+ *El error llevará la respuesta, si error.mensaje no está null, entonces ocurrió un problema y no se borro el local.
+ */
+app.put('/api/admin-borrar-local', cors(), function (req, res, next) {
+  const query = `CALL SP_ADMIN_ELIMINAR_LOCAL(?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
   db.query(query, [req.body.idRestaurante], 
     function (err, result) {
+      let resultado = jsonResult
 
       if (err) resultado.error = err;
       if (result == undefined) {
@@ -389,7 +365,7 @@ app.post('/api/admin/borrar-local', cors(), function (req, res, next) {
         res.send(resultado);
       } else {
         resultado.error = result;
-        // resultado.items = null;
+        resultado.items = null;
         res.send(resultado);
 
       }
@@ -425,13 +401,58 @@ app.put('/api/admin/modificar_menus', cors(), function (req, res, next) {
 })
 
 
+/** CVásquez@13MAR2020
+ * Eliminar un menú, recibe el idMenu
+ *En el error irá la respuesta de la petición para frontend, si error.mensaje != null entonces ocurrió un problema
+ * y no se borro el menú.
+ */
+app.post('/api/eliminar-menu', cors(), function (req, res, next) {
+  const query = `CALL SP_ELIMINAR_MENU(?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
+  db.query(query, [req.body.idMenu], 
+    function (err, result) {
+      let resultado = jsonResult
+      if (err) resultado.error = err;
+      if (result == undefined) {
+        resultado.items = null;
+        res.send(resultado);
+      } else {
+        resultado.error = result;
+        resultado.items = null;
+        res.send(resultado);
+      }
+    })
+})
+
+/** CVásquez@13MAR2020
+ *Cambiar nombreUsuario, Celular de un usuario
+ *Parametros del JSON a recibir, idUsuario, nombreUsuario, nuevoNombre, celular.
+ *La respuesta, error.mensaje, irá null si los cambios se completaron con exito.
+ */
+app.put('/api/combiar-info-usuario', cors(), function (req, res, next) {
+  const query = `CALL SP_CAMBIAR_INFO_USUARIO(?, ?, ?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
+  db.query(query, [req.body.idUsuario, req.body.nombreUsuario, req.body.nuevoNombre, req.body.celular],
+    function (err, result) {
+      let resultado = jsonResult
+      if (err) resultado.error = err;
+      if(result == undefined) {
+        resultado.items = null
+      } else {
+        resultado.error = result
+        resultado.items = null
+        res.send(resultado)
+      }
+    })
+})
 /**
- * Servico para eliminar usuarios 
- * Servicio para cambiar el rol de un usuario
- * Servicio para cambiar datos de un menu, platillo
- * Servicio para eliminar local, activar local
- * Servicion para filtrar restaurante por idUsuario  /api/restauranteUsuario
+ * Servicio para eliminar menús: LISTO
+ * Servico para eliminar usuarios: ?
+ * Servicio para cambiar el rol de un usuario : ?
+ * Servicio para cambiar datos de un menú, platillo: LISTO
+ * Servicio para eliminar local: LISTO
+ * Servicion para filtrar restaurante por idUsuario  /api/restauranteUsuario: LISTO
  * Servicio para camniar contraseña : LISTO 
+ * Servicio para recuperar contraseña ; LISTO
+ * Servicio para cambiar información del usuario: FALTA
  */
 
 module.exports = router; 
