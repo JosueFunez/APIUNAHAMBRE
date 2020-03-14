@@ -172,7 +172,7 @@ app.post('/api/validarUsuario', cors(), function (req, res, next) {
 
 // POST PARA LOGIN
 app.post('/api/login', cors(), function (req, res, next) {
-  const query = 'CALL SP_LOGIN(?, ?, @Mensaje); SELECT @Mensaje AS mensaje;';
+  const query = 'CALL SP_LOGIN(?, ?, @id, @Usuario @Mensaje); SELECT @id, @Usuario, @Mensaje;';
   db.query(query, [req.body.usuario, req.body.contrasena], 
     function (err, result) {
 
