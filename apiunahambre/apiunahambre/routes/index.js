@@ -8,8 +8,14 @@ var app = express()
 var bodyParser = require('body-parser')
 var db = require('../connection/conexion')
 
+const jwt = require('jsonwebtoken')
+const config = require('../configs/config')
+
 var nodemailer = require('nodemailer')
 
+
+app.set('llave', config.llave)
+app.use(bodyParser.urlencoded({ extended: true }))
 
 app.use(cors())
 app.use(bodyParser())
@@ -37,6 +43,8 @@ req: representa la petición (Request)
 res: representa la respuesta a enviar (Result)
 next: representa la siguiente funciíon callback a llamar (Uso del middleware) en próximos sprint haremos uso de este parámetro
 */
+
+
 
 /** CVasquez@04MAR2020
  *
@@ -443,6 +451,45 @@ app.put('/api/combiar-info-usuario', cors(), function (req, res, next) {
       }
     })
 })
+
+
+
+
+// JSON a recibir desde frontend
+// {
+//   "nombreUsuario": "manolo",
+//     "password": "holamundo"
+
+// }
+// PRueba para jwt 
+app.post('/api/autenticar', cors(), (req, res) => {
+  let resultado = jsonResult
+
+  if (req.body.nombreUsuario === "manolo" && req.body.password === "holamundo") {
+    const payload = {
+      check: true,
+      nombreUsuario: "Manolito01",
+      idUsuario: 23
+    }
+    const token = jwt.sign(payload, app.get('llave'), {
+      expiresIn: 1440
+    })
+    resultado.error = 'Autenticacion correcta'
+    resultado.item = token
+    res.send(resultado)
+    // res.json({
+    //   mensaje: 'Autenticacion correcta',
+    //   token: token
+    // })
+
+  } else {
+    // res.json({ mensaje: "Usuario o contraseña incorrectos"})
+    resultado.item = null
+    resultado.error = "Usuario o contraseña incorrectos"
+    res.send(resultado)
+  }
+})
+
 /**
  * Servicio para eliminar menús: LISTO
  * Servico para eliminar usuarios: ?
