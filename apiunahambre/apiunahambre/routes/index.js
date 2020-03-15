@@ -172,14 +172,43 @@ app.post('/api/validarUsuario', cors(), function (req, res, next) {
 
 // POST PARA LOGIN
 app.post('/api/login', cors(), function (req, res, next) {
-  const query = 'CALL SP_LOGIN(?, ?, @id, @Usuario @Mensaje); SELECT @id, @Usuario, @Mensaje;';
+  const query = `CALL SP_LOGIN(?, ?, @id, @Usuario, @Mensaje); SELECT @id as id; SELECT @Usuario as usuario; SELECT @Mensaje as mensaje;`;
   db.query(query, [req.body.usuario, req.body.contrasena], 
     function (err, result) {
 
-      let resultado = jsonResult;
-      resultado.error = result
+      let resultado = jsonResult
+      if (err) resultado.error = err;
+      if (result == undefined) {
+        resultado.items = null
+        res.send(resultado)
+      } else {
+        resultado.error = null
+        resultado.items = result
 
-      res.send(resultado)
+        if (resultado.items[2][0].usuario != undefined ) {
+          // console.log(resultado.items[1][0].id)
+          // console.log(resultado.items[2][0].usuario)
+          const payload = {
+            check: true,
+            nombreUsuario: resultado.items[2][0].usuario,
+            idUsuario: resultado.items[1][0].id
+          }
+          const token = jwt.sign(payload, app.get('llave'), {
+            expiresIn: 1440
+          })
+          resultado.item = token
+          res.send(resultado)
+
+        } else {
+          resultado.error = 'Usuario o contraseña incorrecta'
+          resultado.item = null
+          res.send(resultado)
+
+          // console.log(resultado.items[2][0].id)
+          // console.log(resultado.items[3][0].usuario)
+        }
+
+      }
     })
 })
 
