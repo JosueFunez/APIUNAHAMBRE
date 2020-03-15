@@ -84,16 +84,18 @@ app.post('/api/insertuser', function (req, res, next) {
 
 
 
-//FINAL Get Lista Restaurantes
+// FINAL Get Lista Restaurantes
 // Devuelve la lista de los restaurantes en la DB
 app.get('/api/restaurantes', function (req, res, next) {
 
     const query = `SELECT * FROM Restaurante`;
     db.query(query,
       function (err, result) {
-
+        console.log(result)
+        console.log(err)
         let resultado = jsonResult;
-        resultado.items = result
+        resultado.items = result;
+        resultado.error = err;
 
         res.send(resultado);
       }
