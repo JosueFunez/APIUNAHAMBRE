@@ -72,6 +72,7 @@ next: representa la siguiente funciíon callback a llamar (Uso del middleware) e
 
 
 
+
 /** CVasquez@04MAR2020
  *
  * Obtiene el puerto asignado por el servicio de nube o se le asigna el puerto 3001
@@ -84,6 +85,30 @@ app.listen(app.get('port'), function () {
   console.log('CORS-enabled web server listening on port ',app.get('port'));
 });
 
+/** CVasquez@16MAR2020
+ *Middleware para verificar el jwt enviado por frontend
+ * Se respondera con un mensaje si el token no fue proveído o no es valído 
+ */
+router.use((req, res, next) => {
+  const token = req.headers['access-token'];
+
+  if (token) {
+    jwt.verify(token, app.get('llave'), (err, decoded) => {
+      if (err) {
+        return res.json({ mensaje: 'token invalida' })
+
+      } else {
+        req.decoded = decoded
+        next()
+      }
+    })
+  } else {
+    res.send({
+      mensaje: 'token no proveida.'
+    })
+  }
+
+})
 
 
 /**
@@ -116,7 +141,6 @@ app.post('/upload', (req, res) => {
       res.send(file.path); 
   });
 });
-
 
 // FINAL Get Lista Restaurantes
 // Devuelve la lista de los restaurantes en la DB
@@ -208,7 +232,7 @@ app.post('/api/validarUsuario', cors(), function (req, res, next) {
 
 // POST PARA LOGIN
 app.post('/api/login', cors(), function (req, res, next) {
-  const query = `CALL SP_LOGIN(?, ?, @id, @Usuario, @Mensaje); SELECT @id as id; SELECT @Usuario as usuario; SELECT @Mensaje as mensaje;`;
+  const query = `CALL SP_LOGIN(?, ?, @id, @Usuario, @Mensaje); SELECT @id as id; SELECT @Usuario as usuario; SELECT @Mensaje as mensaje; SELECT Rol_idRol as Rol FROM Usuario_has_Rol WHERE Usuario_idUsuario = (SELECT @id as id);`;
   db.query(query, [req.body.usuario, req.body.contrasena], 
     function (err, result) {
 
@@ -293,8 +317,8 @@ var transporter = nodemailer.createTransport({
   host: 'smtp.ethereal.email',
   port: 587,
   auth: {
-    user: 'emmet.mohr@ethereal.email',
-    pass: '9tXyaN9gZMcp4mc6Bh'
+    user: 'nathan.moore57@ethereal.email',
+    pass: 'ZvkZS84TVCHAFumB2r'
   }
 });
 app.post('/api/checkcorreo', cors(), function (req, res, next) {
@@ -325,7 +349,7 @@ app.post('/api/checkcorreo', cors(), function (req, res, next) {
                       </div>
                     
                       <div>
-                          <a href="#" style="text-decoration: none; background-color: #f8615a; padding: .5rem; color: white; border-radius: 0.4rem;">Login UNAHAMBRE</a>
+                          <a href="http://127.0.0.1:5500/login.html" style="text-decoration: none; background-color: #f8615a; padding: .5rem; color: white; border-radius: 0.4rem;">Login UNAHAMBRE</a>
                       </div>
                       <p>Servicios UNAHAMBRE.</p>
                       <P>Gracias.</P>
@@ -336,7 +360,7 @@ app.post('/api/checkcorreo', cors(), function (req, res, next) {
         var mailOptions = {
           from: 'soporte.unahambre@gmail.com',
           to: req.body.correo,
-          subject: 'Asunto del correo',
+          subject: 'Soporte UNAHAMBRE',
           text: mensaje,
           html: mensaje
         }
@@ -554,6 +578,22 @@ app.post('/api/autenticar', cors(), (req, res) => {
     res.send(resultado)
   }
 })
+
+
+// PRUEBA para verificar un jwt recibido desde frontend
+// BORRAR LUEGO 
+app.get('/datos', router, (req, res) => {
+  const datos = [
+    {
+      id:1, nombre: "Carlos"
+    },
+    {
+      id:2, nombre: "loquesea"
+    }
+  ]
+  res.json(datos)
+})
+
 
 /**
  * Servicio para eliminar menús: LISTO
