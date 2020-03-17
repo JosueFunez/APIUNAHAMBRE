@@ -429,7 +429,7 @@ app.get('/api/usuario-rol', cors(), function (req, res, next) {
 
 /** CVásquez@08MAR2020
  * Cambio de contraseña para los usuarios, recibe: usuario, contrasena, nueva_contrasena
- *Si se logro el completar el cambio entonces el mensaje sera null, caso contrario el mensaje no estará null
+ *Si se logro el completar el cambio entonces el mensaje en el error sera null, caso contrario el mensaje no estará null
  *También se comprueba si la contraseña actual es la correcta, sino el cambio no se realiza
  *error. mensaje llevará la respuesta para frontend.
  */
@@ -438,9 +438,19 @@ app.post('/api/cambiar-contrasena', cors(), function (req, res, next) {
 
   db.query(query, [req.body.usuario, req.body.contrasena, req.body.nueva_contrasena],
     function (err, result) {
+
       let resultado = jsonResult
-      resultado.error = result
-      res.send(resultado)
+      if (err) resultado.error = err;
+      if (result == undefined) {
+        resultado.error = err
+        resultado.items = null
+        res.send("error al cambiar la contraseña"+resultado)
+      } else {
+        resultado.items = null
+        resultado.error = result
+       res.send(resultado)
+      }
+      
     })
 })
 
@@ -533,6 +543,8 @@ app.put('/api/combiar-info-usuario', cors(), function (req, res, next) {
       if (err) resultado.error = err;
       if(result == undefined) {
         resultado.items = null
+        res.send(resultado);
+
       } else {
         resultado.error = result
         resultado.items = null
@@ -540,8 +552,6 @@ app.put('/api/combiar-info-usuario', cors(), function (req, res, next) {
       }
     })
 })
-
-
 
 
 // JSON a recibir desde frontend
@@ -592,6 +602,33 @@ app.get('/datos', router, (req, res) => {
     }
   ]
   res.json(datos)
+})
+
+
+/** CVásquez@17MAR2020
+ *Obtener la información del usuario que ya está debidamente logueado
+ *Se recibe desde frontend el idUsuario
+ *Se retorna la info de las tablas usurio y persona
+ */
+app.post('/api/info-user', cors(), function (req, res, next) {
+  console.log(req.body.idUsuario)
+  const query = `SELECT Nombre, Apellidos, Nombre_Usuario, Celular, Sexo, Numero_Identidad, Correo  FROM Usuario
+                INNER JOIN Persona 
+                ON Persona_idPersona = idPersona
+                WHERE idUsuario = ?`
+  db.query(query, [req.body.idUsuario],
+    function (err, result) {
+      let resultado = jsonResult
+      if (err) resultado.error = err;
+      if (result == undefined) {
+        resultado.items = null
+        res.send(resultado);
+      } else {
+        resultado.error = null
+        resultado.items = result
+        res.send(resultado)
+      }
+    })
 })
 
 
