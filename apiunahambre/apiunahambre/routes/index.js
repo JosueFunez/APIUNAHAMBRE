@@ -181,6 +181,7 @@ app.post('/api/restauranteUsuario', function (req, res, next) {
 });
 
 // FINAL getMenus
+//Retorna todos los menus en la base
 app.get('/api/menus', cors(), function (req, res, next) {
 
   const query = `SELECT * FROM Menu`;
@@ -193,6 +194,7 @@ app.get('/api/menus', cors(), function (req, res, next) {
       res.send(resultado)
     })
 });
+
 
 
 /** CVasquez@04MAR2020
@@ -382,11 +384,11 @@ app.post('/api/checkcorreo', cors(), function (req, res, next) {
 })
 
 /** CVásquez@08MAR2020
- * Devuelve todos los usuarios en la DB.
+ * Devuelve toda la información de usuarios y persona en la DB.
  */
 app.get('/api/getusuarios', cors(), function (req, res, next) {
 
-  const query = `SELECT * FROM Usuario`;
+  const query = `SELECT * FROM Usuario INNER JOIN Persona`;
   db.query(query,
     function (err, result) {
 
@@ -631,6 +633,54 @@ app.post('/api/info-user', cors(), function (req, res, next) {
     })
 })
 
+/** CVásquez@17MAR2020
+ *Retorna todos los menus y el restaurante al que pertenecen y el dueño del restaurante
+ */
+app.get('/api/menusRestaurantesPropietarios', cors(), function (req, res, next) {
+  const query = `SELECT idMenu, Tipo_Menu as Nombre_Menu, Fecha_Registro, Foto_Menu, idCategoria, Nombre_Local, Nombre_Usuario as Dueño_Local FROM Menu INNER JOIN Restaurante
+            ON Restaurante_idRestaurante = idRestaurante
+            INNER JOIN Usuario
+            ON idUsuario = Usuario_idUsuario`
+  db.query(query,
+    function (err, result) {
+      let resultado = jsonResult
+      if (err) resultado.error = err;
+      if (result == undefined) {
+        resultado.items = null;
+        res.send(resultado);
+      } else {
+        resultado.error = null;
+        resultado.items = result;
+        res.send(resultado);
+      }
+
+    })
+})
+
+/** CVásquez@17MAR2020
+ *Retorna todos los platillos y  menus al que pertenecen y el restaurante
+ */
+app.get('/api/platilloMenuRestaurante', cors(), function(req, res, next) {
+  const query = `SELECT * FROM Platillo INNER JOIN Menu
+            ON Menu_idMenu = idMenu
+            INNER JOIN Restaurante
+            ON idRestaurante = Restaurante_idRestaurante;`
+  db.query(query, 
+    function(err, result) {
+      let resultado = jsonResult
+      if (err) resultado.error = err;
+      if (result == undefined) {
+        resultado.items = null;
+        res.send(resultado);
+      } else {
+        resultado.error = null;
+        resultado.items = result;
+        res.send(resultado);
+      }
+
+    })
+
+})
 
 /**
  * Servicio para eliminar menús: LISTO
