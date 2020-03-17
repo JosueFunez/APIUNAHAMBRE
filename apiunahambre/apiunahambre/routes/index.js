@@ -135,8 +135,8 @@ app.post('/api/insertuser', function (req, res, next) {
 // POST SUBIR IMAGEN
 app.post('/upload', (req, res) => {
   let file = req.file;
-  const query = `UPDATE Usuario SET Foto_Perfil = ? WHERE idUsuario = ? AND Nombre_Usuario=?`;
-  db.query(query, file.path, [req.body.id], [req.body.nombreUsuario],
+  const query = `UPDATE Usuario SET Foto_Perfil = ? WHERE idUsuario = ?`;
+  db.query(query, file.path, [req.body.idUsuario],
       function (err, result) {
       res.send(file.path); 
   });
