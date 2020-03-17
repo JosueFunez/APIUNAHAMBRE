@@ -10,6 +10,16 @@ var db = require('../connection/conexion')
 
 const jwt = require('jsonwebtoken')
 const config = require('../configs/config')
+const multer = require('multer');//Modulo para gestion de imagenes
+const uuid = require('uuid/v4');//Modulo para gestion de id de imagenes
+const path = require('path');
+const storage = multer.diskStorage({
+  destination: path.join(__dirname, 'public/uploadsProfilePics'),
+  filename: (req, file, cb) => {
+      cb(null, uuid() + path.extname(file.originalname).toLocaleLowerCase());
+  }
+}); //Almacenamiento de imagenes de perfil
+
 
 var nodemailer = require('nodemailer')
 
@@ -19,6 +29,22 @@ app.use(bodyParser.urlencoded({ extended: true }))
 
 app.use(cors())
 app.use(bodyParser())
+app.use(multer({
+  storage : storage,
+  dest : path.join(__dirname, 'public/uploadsProfilePics'),
+  limits : {fileSize: 10000000},
+  fileFilter : (rq, file, cb) => {
+      const filetypes = /jpeg|jpg|png/;
+      const mimetype = filetypes.test(file.mimetype);
+      const extname = filetypes.test(path.extname(file.originalname));
+      if(mimetype && extname) {
+          return cb(null, true);
+      }
+      cb("Error: Archivo debe ser imagen valida");
+  }
+}).single('image'));
+
+app.use(express.static(path.join(__dirname, 'public')));
 /*JFunez@13Feb2020
 
 Index.js
@@ -81,7 +107,15 @@ app.post('/api/insertuser', function (req, res, next) {
 
   );
 });
-
+// POST SUBIR IMAGEN
+app.post('/upload', (req, res) => {
+  let file = req.file;
+  const query = `UPDATE Usuario SET Foto_Perfil = ? WHERE idUsuario = ?`;
+  db.query(query, file.path, [req.body.id], 
+      function (err, result) {
+      res.send(file.path); 
+  });
+});
 
 
 // FINAL Get Lista Restaurantes
