@@ -702,6 +702,31 @@ app.post('/api/insert-restaurante', cors(), function (req, res, next) {
     })
 })
 
+/**CVásquez@18MAR2020
+ * Retorna todos las solicitudes, de registro de restaurantes, existentes
+ */
+app.get('/api/solicitudes', cors(), function (req, res, next) {
+  const query = `SELECT * FROM solicitud INNER JOIN restaurante ON Restaurante_idRestaurante = idRestaurante`
+  db.query(query, 
+    function (err, result) {
+      respuestaItems(err, result, res)
+    })
+})
+
+/**CVásquez@18MAR2020
+ * Retorna las solicitudes que tengan el estadoSolicitud igual al recibido
+ * json: {estadoSolicitud: ("En espera", "Aprobada" o "Denegada")}
+ */
+app.post('/api/filtro-solicitud', cors(), function(req, res, next) {
+  const query = `SELECT * FROM solicitud INNER JOIN restaurante ON Restaurante_idRestaurante = idRestaurante
+                WHERE EstadoSolicitud = ?`
+  db.query(query, [req.body.estadoSolicitud], 
+    function (err, result) {
+      respuestaItems(err, result, res)
+    })
+})
+
+
 /**
  * 
  * <!---Estándar a usar cuando la respuesta no incluye datos
