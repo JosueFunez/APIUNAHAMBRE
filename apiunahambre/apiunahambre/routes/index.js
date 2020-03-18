@@ -187,12 +187,13 @@ app.get('/api/menus', cors(), function (req, res, next) {
   const query = `SELECT * FROM Menu`;
   db.query(query,
     function (err, result) {
+      respuestaItems(err, result, res)
+      // let resultado = jsonResult;
+      // resultado.items = result
 
-      let resultado = jsonResult;
-      resultado.items = result
-
-      res.send(resultado)
-    })
+      // res.send(resultado)
+    }
+    )
 });
 
 
@@ -248,8 +249,6 @@ app.post('/api/login', cors(), function (req, res, next) {
         resultado.items = result
 
         if (resultado.items[2][0].usuario != undefined ) {
-          // console.log(resultado.items[1][0].id)
-          // console.log(resultado.items[2][0].usuario)
           const payload = {
             check: true,
             nombreUsuario: resultado.items[2][0].usuario,
@@ -265,9 +264,6 @@ app.post('/api/login', cors(), function (req, res, next) {
           resultado.error = 'Usuario o contraseña incorrecta'
           resultado.item = null
           res.send(resultado)
-
-          // console.log(resultado.items[2][0].id)
-          // console.log(resultado.items[3][0].usuario)
         }
 
       }
@@ -387,15 +383,15 @@ app.post('/api/checkcorreo', cors(), function (req, res, next) {
  * Devuelve toda la información de usuarios y persona en la DB.
  */
 app.get('/api/getusuarios', cors(), function (req, res, next) {
-
-  const query = `SELECT * FROM Usuario INNER JOIN Persona`;
+  console.log("recibido")
+  const query = `SELECT * FROM Usuario INNER JOIN Persona ON idPersona = Persona_idPersona`;
   db.query(query,
     function (err, result) {
+      respuestaItems(err, result, res)
+      // let resultado = jsonResult;
+      // resultado.items = result
 
-      let resultado = jsonResult;
-      resultado.items = result
-
-      res.send(resultado)
+      // res.send(resultado)
     })
 });
 
@@ -405,7 +401,7 @@ app.get('/api/getusuarios', cors(), function (req, res, next) {
  * Si el parametro idRol es incorrecto, items estará vacio y error indicará que ese rol no existe.
  */
 // FILTRO USUARIO POR TIPO ROL
-app.get('/api/usuario-rol', cors(), function (req, res, next) {
+app.post('/api/usuario-rol', cors(), function (req, res, next) {
   const query = `CALL SP_ADMIN_FILTRO_CLIENTES_ROL(?, @MENSAJE);`
   db.query(query, [req.body.idRol], 
     function (err, result) {
@@ -643,16 +639,17 @@ app.get('/api/menusRestaurantesPropietarios', cors(), function (req, res, next) 
             ON idUsuario = Usuario_idUsuario`
   db.query(query,
     function (err, result) {
-      let resultado = jsonResult
-      if (err) resultado.error = err;
-      if (result == undefined) {
-        resultado.items = null;
-        res.send(resultado);
-      } else {
-        resultado.error = null;
-        resultado.items = result;
-        res.send(resultado);
-      }
+      respuestaItems(err, result, res)
+      // let resultado = jsonResult
+      // if (err) resultado.error = err;
+      // if (result == undefined) {
+      //   resultado.items = null;
+      //   res.send(resultado);
+      // } else {
+      //   resultado.error = null;
+      //   resultado.items = result;
+      //   res.send(resultado);
+      // }
 
     })
 })
@@ -667,20 +664,79 @@ app.get('/api/platilloMenuRestaurante', cors(), function(req, res, next) {
             ON idRestaurante = Restaurante_idRestaurante;`
   db.query(query, 
     function(err, result) {
-      let resultado = jsonResult
-      if (err) resultado.error = err;
-      if (result == undefined) {
-        resultado.items = null;
-        res.send(resultado);
-      } else {
-        resultado.error = null;
-        resultado.items = result;
-        res.send(resultado);
-      }
+      respuestaItems(err, result, res)
+      // let resultado = jsonResult
+      // if (err) resultado.error = err;
+      // if (result == undefined) {
+      //   resultado.items = null;
+      //   res.send(resultado);
+      // } else {
+      //   resultado.error = null;
+      //   resultado.items = result;
+      //   res.send(resultado);
+      // }
 
     })
-
 })
+
+/** CVásquez@17MAR2020
+ * Recibe como parametros del JSON:
+ *      idUsuario,rolUsuario nombreRestaurante, telefono, correo, ubicacion
+ * el data.success llevará el mensaje de éxito o fracaso 
+ */
+app.post('/api/insert-restaurante', cors(), function (req, res, next) {
+  const query = `CALL SP_INSERT_RESTAURANTE(?, ?, ?, ?, ?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
+  db.query(query, [req.body.idUsuario, req.body.rolUsuario, req.body.nombreRestaurante, req.body.telefono, req.body.correo, req.body.ubicacion], 
+    function (err, result) {
+      respuestaSuccess(err, result, res)
+      // let resultado = jsonResult
+      // if (err) resultado.error = err;
+      // if (result == undefined) {
+      //   resultado.success = null
+      //   res.send(resultado)
+      // } else {
+      //   resultado.error = null
+      //   resultado.success = result
+      //   res.send(resultado)
+      // }
+    })
+})
+
+/**
+ * 
+ * <!---Estándar a usar cuando la respuesta no incluye datos
+ *  Solo mensaje de exíto o fallo en la petición --->
+ */
+
+function respuestaSuccess(err, result,res) {
+  let resultado = jsonResult
+  if (err) resultado.error = err;
+  if (result == undefined) {
+    resultado.success = null
+    res.send(resultado)
+  } else {
+    resultado.success = result
+    resultado.eror = null
+    res.send(resultado)
+  }
+}
+
+/**
+ * 
+ *Estándar a usar para cuando la respuesta incluya datos
+ */
+function respuestaItems(err, result, res) {
+  let resultado = jsonResult
+  if (err) resultado.error = err;
+  if (result == undefined) {
+    resultado.items = null
+    res.send(resultado)
+  } else {
+    resultado.items = result
+    resultado.error = null
+    res. send(resultado)
+  }
+}
 
 /**
  * Servicio para eliminar menús: LISTO
