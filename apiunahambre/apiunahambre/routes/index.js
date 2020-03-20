@@ -8,6 +8,22 @@ var app = express()
 var bodyParser = require('body-parser')
 var db = require('../connection/conexion')
 
+/** JFunez@20032020
+ * Azure tiene una política en que dado un cierto tiempo en que una conexión no hace solicitudes fuerza su desconexión
+ * debido a esto es necesario mantener la conexión por medio de pings.
+ */
+
+function ping(){
+  return db.ping(function(err) {
+  if (err) {
+  console.error('Ocurrió un error conectandose a Azure: ' + err.stack);
+  return false;
+  }
+  });
+  }
+
+setInterval(ping, 20000);
+
 const jwt = require('jsonwebtoken')
 const config = require('../configs/config')
 const multer = require('multer');//Modulo para gestion de imagenes

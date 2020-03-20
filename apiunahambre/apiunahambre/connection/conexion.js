@@ -7,7 +7,8 @@ var connection = mysql.createConnection({
 user: 'rootuh@devuh',
 password: 'UH_password',
 database: 'unahambre',
-multipleStatements: true
+multipleStatements: true,
+ssl: true
 });
 
 
