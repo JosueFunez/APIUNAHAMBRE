@@ -549,21 +549,40 @@ app.post('/api/eliminar-menu', cors(), function (req, res, next) {
  *Parametros del JSON a recibir, idUsuario, nombreUsuario, nuevoNombre, celular.
  *La respuesta, error.mensaje, irá null si los cambios se completaron con exito.
  */
-app.put('/api/combiar-info-usuario', cors(), function (req, res, next) {
-  const query = `CALL SP_CAMBIAR_INFO_USUARIO(?, ?, ?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
-  db.query(query, [req.body.idUsuario, req.body.nombreUsuario, req.body.nuevoNombre, req.body.celular],
-    function (err, result) {
-      let resultado = jsonResult
-      if (err) resultado.error = err;
-      if(result == undefined) {
-        resultado.items = null
-        res.send(resultado);
+/**
+ * Ejemplo del json a recibir
+ * {
+	"idUsuario": 1,
+	"nombreUsuario": "sujeto",
+	"nuevoUsuario": "Sujeto0",
+	"celular": "",
+	"nuevoNombre": "",
+  "nuevoApellido": "Primero" }
+ */
+app.put('/api/cambiar-info-usuario', cors(), function (req, res, next) {
+  console.log('recibido')
+  if (req.body.nuevoUsuario == "") req.body.nuevoUsuario = null; 
+  if (req.body.celular == "") req.body.celular = null; 
+  if (req.body.nuevoNombre == "") req.body.nuevoNombre = null; 
+  if (req.body.nuevoApellido == "") req.body.nuevoApellido = null; 
 
-      } else {
-        resultado.error = result
-        resultado.items = null
-        res.send(resultado)
-      }
+
+  const query = `CALL SP_CAMBIAR_INFO_USUARIO(?, ?, ?, ?, ?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
+  db.query(query, [req.body.idUsuario, req.body.nombreUsuario, req.body.nuevoUsuario, req.body.celular, req.body.nuevoNombre, req.body.nuevoApellido],
+    
+    function (err, result) {
+      respuestaSuccess(err, result, res)
+      // let resultado = jsonResult
+      // if (err) resultado.error = err;
+      // if(result == undefined) {
+      //   resultado.items = null
+      //   res.send(resultado);
+
+      // } else {
+      //   resultado.error = result
+      //   resultado.items = null
+      //   res.send(resultado)
+      // }
     })
 })
 
@@ -757,7 +776,7 @@ function respuestaSuccess(err, result,res) {
     res.send(resultado)
   } else {
     resultado.success = result
-    resultado.eror = null
+    resultado.error = null
     res.send(resultado)
   }
 }
