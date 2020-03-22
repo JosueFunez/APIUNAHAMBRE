@@ -149,7 +149,7 @@ app.post('/api/insertuser', function (req, res, next) {
   );
 });
 // POST SUBIR IMAGEN
-app.post('/upload', (req, res) => {
+app.post('/api/upload-profile-pic', (req, res) => {
   let file = req.file;
   const query = `UPDATE Usuario SET Foto_Perfil = ? WHERE idUsuario = ?`;
   db.query(query, file.path, [req.body.idUsuario],
