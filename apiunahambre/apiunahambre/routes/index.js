@@ -521,6 +521,24 @@ app.put('/api/admin/modificar_menus', cors(), function (req, res, next) {
 
 })
 
+/**Robindroide
+* Eliminar un platillo, recibe el idPlatillo*/
+app.post('/api/eliminar-platillo', cors(), function (req, res, next) {
+  const query = `CALL SP_ELIMINAR_PLATILLO(?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
+  db.query(query, [req.body.idPlatillo], 
+    function (err, result) {
+      let resultado = jsonResult
+      if (err) resultado.error = err;
+      if (result == undefined) {
+        resultado.items = null;
+        res.send(resultado);
+      } else {
+        resultado.error = result;
+        resultado.items = null;
+        res.send(resultado);
+      }
+    })
+})
 
 /** CVásquez@13MAR2020
  * Eliminar un menú, recibe el idMenu
