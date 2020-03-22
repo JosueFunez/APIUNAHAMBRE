@@ -156,8 +156,7 @@ app.post('/api/upload-profile-pic', (req, res) => {
       function (err, result) {
       console.log('Image Uploaded'); 
   });
-  res.send(file.path);
-  console.log(file.path);
+  res.send('uploaded');
 });
 
 // FINAL Get Lista Restaurantes
