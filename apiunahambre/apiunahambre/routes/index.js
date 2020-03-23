@@ -148,15 +148,44 @@ app.post('/api/insertuser', function (req, res, next) {
 
   );
 });
-// POST SUBIR IMAGEN
+/* POST Insertar Platillo */
+app.post('/api/insertar-platillo', function (req, res, next) {
+  const query = `CALL SP_INSERTAR_PLATILLO(?,?,?,?,?,?,@Mensaje);Select @Mensaje as mensaje`;
+  db.query(query, [req.body.descripcion, req.body.idMenu, req.body.nombre, req.body.fotoPlatillo, req.body.precio, req.body.tipoPlatillo],
+    function (err, result, rows) {
+      
+      let resultado = jsonResult;
+      resultado.error = result
+
+      res.send(resultado);
+    }
+
+  );
+});
+/* POST Insertar Menu */
+app.post('/api/insertar-menu', function (req, res, next) {
+  const query = `CALL SP_INSERTAR_MENU(?,?,?,?,@Mensaje);Select @Mensaje as mensaje`;
+  db.query(query, [req.body.tipoMenu, req.body.idRestaurante, req.body.fotoMenu, req.body.idCategoria],
+    function (err, result, rows) {
+      
+      let resultado = jsonResult;
+      resultado.error = result
+
+      res.send(resultado);
+    }
+
+  );
+});
+/**Robindroide 
+POST SUBIR IMAGEN*/
 app.post('/api/upload-profile-pic', (req, res) => {
   let file = req.file;
-  const id = req.rawHeaders[11];
-  /*const query = `UPDATE Usuario SET Foto_Perfil = ? WHERE idUsuario = ?`;
+  const id = req.headers['id-usuario'];
+  const query = `UPDATE Usuario SET Foto_Perfil = ? WHERE idUsuario = ?`;
   db.query(query, file.path, id,
       function (err, result) {
       console.log('Image Uploaded'); 
-  });*/
+  });
   res.send('Uploaded');
   console.log(file.path);
 });
