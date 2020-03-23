@@ -151,11 +151,11 @@ app.post('/api/insertuser', function (req, res, next) {
 // POST SUBIR IMAGEN
 app.post('/api/upload-profile-pic', (req, res) => {
   let file = req.file;
-  const query = `UPDATE Usuario SET Foto_Perfil = ? WHERE idUsuario = ?`;
+  /*const query = `UPDATE Usuario SET Foto_Perfil = ? WHERE idUsuario = ?`;
   db.query(query, file.path, [req.body.idUsuario],
       function (err, result) {
       console.log('Image Uploaded'); 
-  });
+  });*/
   res.send(file.path);
 });
 
