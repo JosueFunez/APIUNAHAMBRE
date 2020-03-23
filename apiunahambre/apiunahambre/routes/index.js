@@ -47,7 +47,7 @@ app.use(cors())
 app.use(bodyParser())
 app.use(multer({
   storage : storage,
-  dest : path.join(__dirname, 'public/uploadsProfilePics'),
+  dest : path.join(__dirname, '../public/uploadsProfilePics'),
   limits : {fileSize: 10000000},
   fileFilter : (rq, file, cb) => {
       const filetypes = /jpeg|jpg|png/;
@@ -156,7 +156,8 @@ app.post('/api/upload-profile-pic', (req, res) => {
       function (err, result) {
       console.log('Image Uploaded'); 
   });*/
-  res.send(file.path);
+  res.send('Uploaded');
+  console.log(file.path);
 });
 
 // FINAL Get Lista Restaurantes
