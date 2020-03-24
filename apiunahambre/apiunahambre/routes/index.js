@@ -555,7 +555,7 @@ app.put('/api/admin/modificar_menus', cors(), function (req, res, next) {
 /**Robindroide
 MODIFICAR PLATILLOS
 */
-app.put('/api/admin-modificar-platillo', cors(), function (req, res, next) {
+app.put('/api/admin/modificar-platillo', cors(), function (req, res, next) {
   const query = `CALL SP_ADMIN_EDITAR_PLATILLO(?, ?, ?, ?, ?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
   db.query(query, [req.body.descripcion, req.body.fotoPlatillo, req.body.nombrePlatillo, req.body.precio, req.body.idMenu, req.body.idTipoPlatillo], 
     function (err, result) {
@@ -574,7 +574,7 @@ app.put('/api/admin-modificar-platillo', cors(), function (req, res, next) {
 /**Robindroide
 MODIFICAR RESTAURANTE
 */
-app.put('/api/admin-modificar-local', cors(), function (req, res, next) {
+app.put('/api/admin/modificar-local', cors(), function (req, res, next) {
   const query = `CALL SP_ADMIN_EDITAR_RESTAURANTE(?, ?, ?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
   db.query(query, [req.body.nombreRestaurante, req.body.telefono, req.body.ubicacion, req.body.idUsuario], 
     function (err, result) {
