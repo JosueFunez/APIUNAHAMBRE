@@ -180,7 +180,7 @@ app.post('/api/insertar-menu', function (req, res, next) {
 POST SUBIR IMAGEN*/
 app.post('/api/upload-profile-pic', (req, res) => {
   let file = req.file;
-  const id = req.headers['id-usuario'];
+  const id = req.headers['idusuario'];
   const query = `UPDATE Usuario SET Foto_Perfil = ? WHERE idUsuario = ?`;
   db.query(query, [file.path, id],
       function (err, result) {
