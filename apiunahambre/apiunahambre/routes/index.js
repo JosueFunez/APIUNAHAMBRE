@@ -552,7 +552,44 @@ app.put('/api/admin/modificar_menus', cors(), function (req, res, next) {
     })
 
 })
-
+/**Robindroide
+MODIFICAR PLATILLOS
+*/
+app.put('/api/admin-modificar-platillo', cors(), function (req, res, next) {
+  const query = `CALL SP_ADMIN_EDITAR_PLATILLO(?, ?, ?, ?, ?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
+  db.query(query, [req.body.descripcion, req.body.fotoPlatillo, req.body.nombrePlatillo, req.body.precio, req.body.idMenu, req.body.idTipoPlatillo], 
+    function (err, result) {
+      let resultado = jsonResult
+      if (err) resultado.error = err;
+      if (result == undefined) {
+        resultado.items = null;
+        res.send(resultado);
+      } else {
+        resultado.error = result;
+        resultado.items = null;
+        res.send(resultado);
+      }
+    })
+})
+/**Robindroide
+MODIFICAR RESTAURANTE
+*/
+app.put('/api/admin-modificar-local', cors(), function (req, res, next) {
+  const query = `CALL SP_ADMIN_EDITAR_RESTAURANTE(?, ?, ?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
+  db.query(query, [req.body.nombreRestaurante, req.body.telefono, req.body.ubicacion, req.body.idUsuario], 
+    function (err, result) {
+      let resultado = jsonResult
+      if (err) resultado.error = err;
+      if (result == undefined) {
+        resultado.items = null;
+        res.send(resultado);
+      } else {
+        resultado.error = result;
+        resultado.items = null;
+        res.send(resultado);
+      }
+    })
+})
 /**Robindroide
 * Eliminar un platillo, recibe el idPlatillo*/
 app.post('/api/eliminar-platillo', cors(), function (req, res, next) {
@@ -852,7 +889,7 @@ function respuestaItems(err, result, res) {
  * Servicio para eliminar menús: LISTO
  * Servico para eliminar usuarios: ?
  * Servicio para cambiar el rol de un usuario : ?
- * Servicio para cambiar datos de un menú, platillo: LISTO
+ * Servicio para cambiar datos de un menú, platillo, restaurante: LISTO
  * Servicio para eliminar local: LISTO
  * Servicion para filtrar restaurante por idUsuario  /api/restauranteUsuario: LISTO
  * Servicio para camniar contraseña : LISTO 
