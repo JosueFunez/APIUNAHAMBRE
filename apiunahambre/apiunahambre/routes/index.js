@@ -647,16 +647,12 @@ app.post('/api/eliminar-menu', cors(), function (req, res, next) {
   "nuevoApellido": "Primero" }
  */
 app.put('/api/cambiar-info-usuario', cors(), function (req, res, next) {
-  console.log('recibido')
   if (req.body.nuevoUsuario == "") req.body.nuevoUsuario = null; 
   if (req.body.celular == "") req.body.celular = null; 
   if (req.body.nuevoNombre == "") req.body.nuevoNombre = null; 
   if (req.body.nuevoApellido == "") req.body.nuevoApellido = null; 
-
-
   const query = `CALL SP_CAMBIAR_INFO_USUARIO(?, ?, ?, ?, ?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
   db.query(query, [req.body.idUsuario, req.body.nombreUsuario, req.body.nuevoUsuario, req.body.celular, req.body.nuevoNombre, req.body.nuevoApellido],
-    
     function (err, result) {
       respuestaSuccess(err, result, res)
       // let resultado = jsonResult
@@ -673,6 +669,23 @@ app.put('/api/cambiar-info-usuario', cors(), function (req, res, next) {
     })
 })
 
+
+/**
+ * CVásquez@23MAR2020
+ * Ruta exclusiva para página de admin usuarios
+ * en success irá la respuesta si mensaje está null todo funciono correctamente sino hubo algun error y el cambio no se hizo
+ */
+app.post('/api/admin/editar-usuario', cors(), function (req, res, next) {
+  if (req.body.usuario == "") req.body.usuario = null;
+  if (req.body.nombre == "") req.body.nombre = null;
+  if (req.body.apellido == "") req.body.apellido = null;
+  const query = `CALL SP_ADMIN_EDITAR_USUARIO(?, ?, ?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
+  db.query(query, [req.body.idUsuario, req.body.usuario, req.body.nombre, req.body.apellido],
+
+    function (err, result) {
+      respuestaSuccess(err, result, res)
+    })
+})
 
 // JSON a recibir desde frontend
 // {
