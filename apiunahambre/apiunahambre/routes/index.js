@@ -186,7 +186,7 @@ app.post('/api/upload-profile-pic', (req, res) => {
       function (err, result) {
       console.log('Image Uploaded'); 
   });
-  res.send('Uploaded');
+  res.send(file.path);
   console.log(file.path);
 });
 
