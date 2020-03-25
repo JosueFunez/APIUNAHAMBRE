@@ -150,8 +150,8 @@ app.post('/api/insertuser', function (req, res, next) {
 });
 /* POST Insertar Platillo */
 app.post('/api/insertar-platillo', function (req, res, next) {
-  const query = `CALL SP_INSERTAR_PLATILLO(?,?,?,?,?,?,@Mensaje);Select @Mensaje as mensaje`;
-  db.query(query, [req.body.descripcion, req.body.idMenu, req.body.nombre, req.body.fotoPlatillo, req.body.precio, req.body.tipoPlatillo],
+  const query = `CALL SP_INSERTAR_PLATILLO(?,?,?,?,?,@Mensaje);Select @Mensaje as mensaje`;
+  db.query(query, [req.body.descripcion, req.body.idMenu, req.body.nombre, req.body.precio, req.body.tipoPlatillo],
     function (err, result, rows) {
       
       let resultado = jsonResult;
@@ -557,8 +557,8 @@ app.put('/api/admin/modificar_menus', cors(), function (req, res, next) {
 MODIFICAR PLATILLOS
 */
 app.put('/api/admin/modificar-platillo', cors(), function (req, res, next) {
-  const query = `CALL SP_ADMIN_EDITAR_PLATILLO(?, ?, ?, ?, ?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
-  db.query(query, [req.body.descripcion, req.body.fotoPlatillo, req.body.nombrePlatillo, req.body.precio, req.body.idMenu, req.body.idTipoPlatillo], 
+  const query = `CALL SP_ADMIN_EDITAR_PLATILLO(?, ?, ?, ?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
+  db.query(query, [req.body.descripcion, req.body.nombrePlatillo, req.body.precio, req.body.idMenu, req.body.idTipoPlatillo], 
     function (err, result) {
       let resultado = jsonResult
       if (err) resultado.error = err;
