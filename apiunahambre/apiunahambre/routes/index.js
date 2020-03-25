@@ -194,11 +194,12 @@ app.post('/api/upload-profile-pic', (req, res) => {
 // Devuelve la lista de los restaurantes en la DB
 app.get('/api/restaurantes', function (req, res, next) {
 
-    const query = `SELECT * FROM Restaurante`;
+  const query = `SELECT idRestaurante, Nombre_Local, Telefono, Correo, Ubicacion, Usuario_idUsuario, EstadoRestaurante, Nombre_Usuario FROM Restaurante
+INNER JOIN usuario
+WHERE idUsuario = Usuario_idUsuario`
+    // `SELECT * FROM Restaurante`;
     db.query(query,
       function (err, result) {
-        console.log(result)
-        console.log(err)
         let resultado = jsonResult;
         resultado.items = result;
         resultado.error = err;
