@@ -235,7 +235,7 @@ app.post('/api/restauranteUsuario', function (req, res, next) {
 
 // FINAL getMenus
 //Retorna todos los menus en la base
-app.get('/api/menus', cors(), function (req, res, next) {
+app.get('/api/g_mostrar_menus', cors(), function (req, res, next) {
 
   const query = `SELECT * FROM Menu`;
   db.query(query,
@@ -256,7 +256,7 @@ app.get('/api/menus', cors(), function (req, res, next) {
  * Se devuelve un arreglo en el campo items con los platillos existentes en la base de datos
  */
 
-app.get('/api/platillos', cors(), function (req, res, next) {
+app.get('/api/g_mostrar_platillos', cors(), function (req, res, next) {
 
   const query = `SELECT * FROM Platillo`;
   db.query(query,
@@ -706,14 +706,46 @@ app.post('/api/insert-restaurante', cors(), function (req, res, next) {
     })
 })
 
+
+
+
+/***************************Servicios admin global**************************** */
 /**CVásquez@18MAR2020
  * Retorna todos las solicitudes, de registro de restaurantes, existentes
  */
-app.get('/api/solicitudes', cors(), function (req, res, next) {
+app.get('/api/admin_global_mostrar_solicitudes', cors(), function (req, res, next) {
   const query = `SELECT * FROM solicitud INNER JOIN restaurante ON Restaurante_idRestaurante = idRestaurante`
-  db.query(query, 
+  db.query(query,
     function (err, result) {
       respuestaItems(err, result, res)
+    })
+})
+
+/**
+* CVasquez@28Mar2020
+*Si el mensaje está null entonces el usuario se registro correctamente, sino entonces el mensaje
+*no estará vacio.
+*/
+app.post('/api/admin_global_insertar_usuario', cors(), function (req, res, next) {
+  const query = `CALL SP_INSERTAR_USUARIO(?,?,?,?,?,?,?,?,@Mensaje);Select @Mensaje as mensaje`;
+  db.query(query, [req.body.nombre, req.body.apellido, req.body.celular, req.body.sexo, req.body.numeroIdentidad, req.body.nombreUsuario, req.body.contrasena, req.body.correo],
+    function (err, result) {
+      respuestaError(err, result, res)
+    }
+
+  );
+});
+/**
+ * CVasquez@28Mar2020
+ * Eliminar usuarios desde la página de admin usuarios, mensaje = null : se borró el usuario
+ */
+app.post('/api/admin_global_eliminar_usuario', cors(), function (req, res, next) {
+  console.log(req.body.idUsuario)
+  const query = `CALL SP_ELIMINAR_USUARIO(?, @Mensaje); SELECT @Mensaje AS mensaje`
+  db.query(query, [req.body.idUsuario],
+    function (err, result) {
+      console.log(result)
+      respuestaError(err, result, res)
     })
 })
 
@@ -721,15 +753,17 @@ app.get('/api/solicitudes', cors(), function (req, res, next) {
  * Retorna las solicitudes que tengan el estadoSolicitud igual al recibido
  * json: {estadoSolicitud: ("En espera", "Aprobada" o "Denegada")}
  */
-app.post('/api/filtro-solicitud', cors(), function(req, res, next) {
+app.post('/api/admin_gobal_solicitud_filtro_estado', cors(), function (req, res, next) {
   const query = `SELECT * FROM solicitud INNER JOIN restaurante ON Restaurante_idRestaurante = idRestaurante
                 WHERE EstadoSolicitud = ?`
-  db.query(query, [req.body.estadoSolicitud], 
+  db.query(query, [req.body.estadoSolicitud],
     function (err, result) {
       respuestaItems(err, result, res)
     })
 })
 
+
+/******************************************************************************** */
 
 /**
  * 
@@ -748,6 +782,19 @@ function respuestaSuccess(err, result,res) {
     resultado.error = null
     res.send(resultado)
   }
+}
+
+function respuestaError(err, result, res){
+  let resultado = jsonResult
+  if (err) resultado.error = err;
+  if (result == undefined) {
+    resultado.error = null
+    res.send(resultado)
+  } else {
+    resultado.error = result
+    res.send(resultado)
+  }
+
 }
 
 /**
