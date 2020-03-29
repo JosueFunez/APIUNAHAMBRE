@@ -761,7 +761,103 @@ app.post('/api/admin_gobal_solicitud_filtro_estado', cors(), function (req, res,
       respuestaItems(err, result, res)
     })
 })
+// CRUD PARA MENÚS
 
+/**
+ * `(
+{
+"nombreMenu": ,
+"idRestaurante": ,
+"foto":  ,
+"idCategoria": 
+}
+ */
+
+
+app.post('/api/admin_global_agregar_menu', cors(), function (req, res, next) {
+  console.log('recibido')
+  const query = `CALL SP_INSERTAR_MENU(?, ?, ?, ?, @Mensaje); SELECT @Mensaje AS mensaje`
+  db.query(query, [req.body.nombreMenu, req.body.idRestaurante, req.body.foto, req.body.idCategoria], 
+    function (err, result) {
+      respuestaError(err, result, res)
+    })
+})
+/**
+ * {
+ * "idMenu": ,
+ * "nombre": ,
+ * "foto": 
+ * }
+ */
+app.post('/api/admin_global_editar_menu', cors(), function (req, res, next) {
+  const query = `CALL SP_ADMIN_EDITAR_MENU(?, ?, ?, @Mensaje); SELECT @Mensaje AS mensaje;`
+  db.query(query, [req.body.idMenu, req.body.nombre, req.body.foto], 
+    function (err, result) {
+      respuestaError(err, result, res)
+    })
+})
+/**{
+ * "idMenu":
+ * } */
+app.post('/api/admin_global_borrar_menu', cors(), function (req, res, next) {
+  const query = `CALL SP_ELIMINAR_MENU(?, @Mensaje); SELECT @Mensaje AS mensaje`
+  db.query(query, [req.body.idMenu], 
+    function (err, result) {
+      respuestaError(err, result, res)
+    })
+})
+
+// CRUD PARA PLATILLOS
+/**
+ * 
+    {
+      
+      "idMenu" , 
+      "nombre" ,
+      "descripcion" , 
+      "precio" , 
+      "tipoPlatillo" 
+    }
+)
+ */
+app.post('/api/admin_global_agregar_platillo', cors(), function (req, res, next) {
+  const query = `CALL SP_INSERTAR_PLATILLO(?, ?, ?, ?, ?, @Mensaje); SELECT @Mensaje AS mensaje`
+  db.query(query, [req.body.descripcion, req.body.idMenu, req.body.nombre, req.body.precio, req.body.tipoPlatillo],
+    function (err, result) {
+      respuestaError(err, result, res)
+    })
+})
+
+/**
+ *
+{   
+  "idPlatillo":  , 
+  "nombre":  , 
+  "descripcion":  , 
+  "precio": , 
+  "idTipoPlatillo": 
+}
+ */
+app.post('/api/admin_global_editar_platillo', cors(), function (req, res, next) {
+  const query = `CALL SP_EDITAR_PLATILLO(?, ?, ?, ?, ?, @Mensaje); SELECT @Mensaje AS mensaje`
+  db.query(query, [req.body.idPlatillo, req.body.nombre, req.body.descripcion, req.body.precio, req.body.idTipoPlatillo], 
+    function (err, result) {
+      respuestaError(err, result, res)
+    })
+})
+/**
+ * {
+ * "idPlatillo":
+ * }
+ */
+// error.affectedRows": si es igual a 1 entonces se logro borrar el platillo si es cero no se borró.
+app.post('/api/admin_global_borrar_platillo', cors(), function (req, res, next) {
+  const query = `DELETE FROM platillo WHERE idPlatillo = ?`
+  db.query(query, [req.body.idPlatillo],
+    function (err, result) {
+      respuestaError(err, result, res)
+    })
+})
 
 /******************************************************************************** */
 
