@@ -736,6 +736,23 @@ app.post('/api/admin_global_insertar_usuario', cors(), function (req, res, next)
   );
 });
 /**
+{
+  "idUsuario": 
+}
+ */
+/**
+ * CVasquez@28Mar2020
+ */
+app.post('/api/admin_global_eliminar_usuario', cors(), function (req, res, next) {
+  const query = `CALL SP_ELIMINAR_USUARIO(?, @Mensaje); SELECT @Mensaje AS mensaje`
+  db.query(query, [req.body.idUsuario],
+    function (err, result){
+      respuestaError(err, result, res)
+    })
+})
+
+
+/**
  * CVasquez@28Mar2020
  * Eliminar usuarios desde la página de admin usuarios, mensaje = null : se borró el usuario
  */
