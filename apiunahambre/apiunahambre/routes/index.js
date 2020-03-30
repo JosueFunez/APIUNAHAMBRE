@@ -405,7 +405,7 @@ app.post('/api/checkcorreo', cors(), function (req, res, next) {
 /** CVásquez@08MAR2020
  * Devuelve toda la información de usuarios y persona en la DB.
  */
-app.get('', cors(), function (req, res, next) {
+app.get('/api/admin_global_mostrar_usuarios', cors(), function (req, res, next) {
   console.log("recibido")
   const query = `SELECT * FROM Usuario INNER JOIN Persona ON idPersona = Persona_idPersona`;
   db.query(query,
