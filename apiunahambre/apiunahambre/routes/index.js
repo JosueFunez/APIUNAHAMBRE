@@ -503,7 +503,7 @@ app.put('/api/g-borrar-local', cors(), function (req, res, next) {
 * Recibe como parametros idMenu, nombreMenu y foto, dichos parametros pueden ser nulos si no se
 * desea cambiar algo del menú.
 */
-app.put('/api/admin/modificar_menus', cors(), function (req, res, next) {
+app.put('/api/admin_global_modificar_menus', cors(), function (req, res, next) {
   const query = `CALL SP_ADMIN_EDITAR_MENU(?, ?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
   db.query(query, [req.body.idMenu, req.body.nombreMenu, req.body.foto], 
     function (err, result) {
@@ -526,8 +526,8 @@ app.put('/api/admin/modificar_menus', cors(), function (req, res, next) {
 /**Robindroide
 MODIFICAR PLATILLOS PARA ADMIN
 */
-app.put('/api/modificar-platillo', cors(), function (req, res, next) {
-  const query = `CALL SP_ADMIN_EDITAR_PLATILLO(?, ?, ?, ?, ?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
+app.put('/api/admin_local_modificar-platillo', cors(), function (req, res, next) {
+  const query = `CALL SP_LOCAL_EDITAR_PLATILLO(?, ?, ?, ?, ?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
   db.query(query, [req.body.descripcion, req.body.nombrePlatillo, req.body.precio, req.body.fotoPlatillo ,req.body.idMenu, req.body.idTipoPlatillo], 
     function (err, result) {
       let resultado = jsonResult
@@ -545,7 +545,7 @@ app.put('/api/modificar-platillo', cors(), function (req, res, next) {
 /**Robindroide
 MODIFICAR RESTAURANTE
 */
-app.put('/api/modificar-local', cors(), function (req, res, next) {
+app.put('/api/admin_global_modificar-local', cors(), function (req, res, next) {
   const query = `CALL SP_ADMIN_EDITAR_RESTAURANTE(?, ?, ?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
   db.query(query, [req.body.nombreRestaurante, req.body.telefono, req.body.ubicacion, req.body.idUsuario], 
     function (err, result) {
@@ -563,7 +563,7 @@ app.put('/api/modificar-local', cors(), function (req, res, next) {
 })
 /**Robindroide
 * Eliminar un platillo, recibe el idPlatillo*/
-app.post('/api/eliminar-platillo', cors(), function (req, res, next) {
+app.post('/api/g-eliminar-platillo', cors(), function (req, res, next) {
   const query = `CALL SP_ELIMINAR_PLATILLO(?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
   db.query(query, [req.body.idPlatillo], 
     function (err, result) {
