@@ -102,7 +102,7 @@ app.listen(app.get('port'), function () {
 });
 
 /** CVasquez@16MAR2020
- *Middleware para verificar el jwt enviado por frontend
+ *Middleware para verificar el jwt enviado desde frontend
  * Se respondera con un mensaje si el token no fue proveído o no es valído 
  */
 router.use((req, res, next) => {
@@ -192,7 +192,11 @@ app.post('/api/upload-profile-pic', (req, res) => {
 
 // FINAL Get Lista Restaurantes
 // Devuelve la lista de los restaurantes en la DB
-app.get('/api/restaurantes', function (req, res, next) {
+/**
+ * /api/g_mostrar_restaurantes
+ * /api/restaurantes
+ */
+app.get('/api/g_mostrar_restaurantes', function (req, res, next) {
 
   const query = `SELECT idRestaurante, Nombre_Local, Telefono, Correo, Ubicacion, Usuario_idUsuario, EstadoRestaurante, Nombre_Usuario FROM Restaurante
 INNER JOIN usuario
@@ -231,7 +235,7 @@ app.post('/api/restauranteUsuario', function (req, res, next) {
 
 // FINAL getMenus
 //Retorna todos los menus en la base
-app.get('/api/menus', cors(), function (req, res, next) {
+app.get('/api/g_mostrar_menus', cors(), function (req, res, next) {
 
   const query = `SELECT * FROM Menu`;
   db.query(query,
@@ -258,7 +262,7 @@ app.get('/api/tipo-platillos', cors(), function(req,res,next){
  * Se devuelve un arreglo en el campo items con los platillos existentes en la base de datos
  */
 
-app.get('/api/platillos', cors(), function (req, res, next) {
+app.get('/api/g_mostrar_platillos', cors(), function (req, res, next) {
 
   const query = `SELECT * FROM Platillo`;
   db.query(query,
@@ -270,18 +274,6 @@ app.get('/api/platillos', cors(), function (req, res, next) {
       res.send(resultado)
     })
 });
-
-
-
-/**PRUEBA: Si no existe el usuario la propiedad item irà vacìa, de lo contrario, llevarà una row */
-app.post('/api/validarUsuario', cors(), function (req, res, next) {
-  const query = 'SELECT "" FROM Usuario WHERE Nombre_Usuario = ? AND Contrasena = ?'
-  db.query(query, [req.body.nombreUsuario, req.body.contrasena], 
-    function (err, result) {
-    res.send(result)
-  })
-})
-
 
 //      * CVasquez@02Mar2020
 //      *El error llevará el mensaje para la consulta
@@ -325,21 +317,6 @@ app.post('/api/login', cors(), function (req, res, next) {
     })
 })
 
-
-
-/**PRUEBA: Si no existe el usuario la propiedad item ira vacìa, de lo contrario, llevarà una row */
-app.post('/api/obtenerUsuario', cors(), function (req, res, next) {
-  const query = 'SELECT * FROM Usuario WHERE Nombre_Usuario = ? AND Contrasena = ?'
-  db.query(query, [req.body.nombreUsuario, req.body.contrasena], 
-    function (err, rows) {
-     let resultado = jsonResult
-     if (err) resultado.error = err;
-     resultado.items = rows
-    res.send(resultado)
-  })
-})
-
-
 /** JFunez@03MAR2020
  * 
  * Se devuelve un arreglo en el campo items si el usuario tiene privilegio para dicha acción, de lo contrario, items.length = 0
@@ -349,11 +326,12 @@ app.post('/api/validarPrivilegio', cors(), function(req,res,next){
   const query = "SELECT * FROM Rol_Privilegio RP INNER JOIN Usuario_has_Rol UR ON RP.Rol_idRol = UR.Rol_idRol WHERE UR.Usuario_idUsuario = ? AND RP.Privilegio_idPrivilegios = ? AND RP.Rol_idRol = ?"
   db.query(query, [req.body.idUsuario, req.body.idPrivilegio, req.body.idRol],
     function(err, rows){
-      if(err) throw err
+      respuestaItems(err, rows, res)
+      // if(err) throw err
       
-      let resultado = jsonResult
-      resultado.items = rows
-      res.send(resultado)
+      // let resultado = jsonResult
+      // resultado.items = rows
+      // res.send(resultado)
     }
     )
 })
@@ -382,11 +360,6 @@ app.post('/api/checkcorreo', cors(), function (req, res, next) {
       resultado.error = result
 
       if (resultado.error[1][0].mensaje != null) {
-        // console.log('El correo existe')
-        // console.log('LA CONTRASEÑA ES : ' + resultado.error[1][0].mensaje)
-
-        // PROCESO DE ENVIAR CORREO
-        // ${ resultado.error[1][0].mensaje }
         var mensaje = `
               <div style="background-color: #dcd6f7; width: 50%; height: 100%; text-align: center; justify-content: center; border-radius: 1rem; padding: 1rem;">
                   <div>
@@ -420,15 +393,16 @@ app.post('/api/checkcorreo', cors(), function (req, res, next) {
         
       transporter.sendMail(mailOptions, function(error, info){
           if(error) {
-              console.log(error)
+              // console.log(error)
+            res.send('no se pudo completar')
           } else {
-              console.log('Email enviado: ' + info.response)
+              // console.log('Email enviado: ' + info.response)
           }
           })
 
         res.send('1')
       } else {
-        console.log('El correo no existe')
+        // console.log('El correo no existe')
         res.send('0')
       }
     })
@@ -437,16 +411,12 @@ app.post('/api/checkcorreo', cors(), function (req, res, next) {
 /** CVásquez@08MAR2020
  * Devuelve toda la información de usuarios y persona en la DB.
  */
-app.get('/api/getusuarios', cors(), function (req, res, next) {
+app.get('/api/admin_global_mostrar_usuarios', cors(), function (req, res, next) {
   console.log("recibido")
   const query = `SELECT * FROM Usuario INNER JOIN Persona ON idPersona = Persona_idPersona`;
   db.query(query,
     function (err, result) {
       respuestaItems(err, result, res)
-      // let resultado = jsonResult;
-      // resultado.items = result
-
-      // res.send(resultado)
     })
 });
 
@@ -456,7 +426,7 @@ app.get('/api/getusuarios', cors(), function (req, res, next) {
  * Si el parametro idRol es incorrecto, items estará vacio y error indicará que ese rol no existe.
  */
 // FILTRO USUARIO POR TIPO ROL
-app.post('/api/usuario-rol', cors(), function (req, res, next) {
+app.post('/api/admin_global_usuario_filtro_rol', cors(), function (req, res, next) {
   const query = `CALL SP_ADMIN_FILTRO_CLIENTES_ROL(?, @MENSAJE);`
   db.query(query, [req.body.idRol], 
     function (err, result) {
@@ -513,7 +483,7 @@ app.post('/api/cambiar-contrasena', cors(), function (req, res, next) {
  *Se recibe el idRestaurante.
  *El error llevará la respuesta, si error.mensaje no está null, entonces ocurrió un problema y no se borro el local.
  */
-app.put('/api/admin-borrar-local', cors(), function (req, res, next) {
+app.put('/api/g-borrar-local', cors(), function (req, res, next) {
   const query = `CALL SP_ADMIN_ELIMINAR_LOCAL(?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
   db.query(query, [req.body.idRestaurante], 
     function (err, result) {
@@ -539,7 +509,7 @@ app.put('/api/admin-borrar-local', cors(), function (req, res, next) {
 * Recibe como parametros idMenu, nombreMenu y foto, dichos parametros pueden ser nulos si no se
 * desea cambiar algo del menú.
 */
-app.put('/api/admin/modificar_menus', cors(), function (req, res, next) {
+app.put('/api/admin_global_modificar_menus', cors(), function (req, res, next) {
   const query = `CALL SP_ADMIN_EDITAR_MENU(?, ?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
   db.query(query, [req.body.idMenu, req.body.nombreMenu, req.body.foto], 
     function (err, result) {
@@ -560,11 +530,11 @@ app.put('/api/admin/modificar_menus', cors(), function (req, res, next) {
 
 })
 /**Robindroide
-MODIFICAR PLATILLOS
+MODIFICAR PLATILLOS PARA ADMIN
 */
-app.put('/api/admin/modificar-platillo', cors(), function (req, res, next) {
-  const query = `CALL SP_ADMIN_EDITAR_PLATILLO(?, ?, ?, ?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
-  db.query(query, [req.body.descripcion, req.body.nombrePlatillo, req.body.precio, req.body.idMenu, req.body.idTipoPlatillo], 
+app.put('/api/admin_local_modificar-platillo', cors(), function (req, res, next) {
+  const query = `CALL SP_LOCAL_EDITAR_PLATILLO(?, ?, ?, ?, ?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
+  db.query(query, [req.body.descripcion, req.body.nombrePlatillo, req.body.precio, req.body.fotoPlatillo ,req.body.idMenu, req.body.idTipoPlatillo], 
     function (err, result) {
       let resultado = jsonResult
       if (err) resultado.error = err;
@@ -581,7 +551,7 @@ app.put('/api/admin/modificar-platillo', cors(), function (req, res, next) {
 /**Robindroide
 MODIFICAR RESTAURANTE
 */
-app.put('/api/admin/modificar-local', cors(), function (req, res, next) {
+app.put('/api/admin_global_modificar-local', cors(), function (req, res, next) {
   const query = `CALL SP_ADMIN_EDITAR_RESTAURANTE(?, ?, ?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
   db.query(query, [req.body.nombreRestaurante, req.body.telefono, req.body.ubicacion, req.body.idUsuario], 
     function (err, result) {
@@ -599,7 +569,7 @@ app.put('/api/admin/modificar-local', cors(), function (req, res, next) {
 })
 /**Robindroide
 * Eliminar un platillo, recibe el idPlatillo*/
-app.post('/api/eliminar-platillo', cors(), function (req, res, next) {
+app.post('/api/g-eliminar-platillo', cors(), function (req, res, next) {
   const query = `CALL SP_ELIMINAR_PLATILLO(?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
   db.query(query, [req.body.idPlatillo], 
     function (err, result) {
@@ -662,17 +632,6 @@ app.put('/api/cambiar-info-usuario', cors(), function (req, res, next) {
   db.query(query, [req.body.idUsuario, req.body.nombreUsuario, req.body.nuevoUsuario, req.body.celular, req.body.nuevoNombre, req.body.nuevoApellido],
     function (err, result) {
       respuestaSuccess(err, result, res)
-      // let resultado = jsonResult
-      // if (err) resultado.error = err;
-      // if(result == undefined) {
-      //   resultado.items = null
-      //   res.send(resultado);
-
-      // } else {
-      //   resultado.error = result
-      //   resultado.items = null
-      //   res.send(resultado)
-      // }
     })
 })
 
@@ -682,7 +641,7 @@ app.put('/api/cambiar-info-usuario', cors(), function (req, res, next) {
  * Ruta exclusiva para página de admin usuarios
  * en success irá la respuesta si mensaje está null todo funciono correctamente sino hubo algun error y el cambio no se hizo
  */
-app.post('/api/admin/editar-usuario', cors(), function (req, res, next) {
+app.post('/api/admin_global_editar_usuario', cors(), function (req, res, next) {
   if (req.body.usuario == "") req.body.usuario = null;
   if (req.body.nombre == "") req.body.nombre = null;
   if (req.body.apellido == "") req.body.apellido = null;
@@ -694,6 +653,324 @@ app.post('/api/admin/editar-usuario', cors(), function (req, res, next) {
     })
 })
 
+/** CVásquez@17MAR2020
+ *Obtener la información del usuario que ya está debidamente logueado
+ *Se recibe desde frontend el idUsuario
+ *Se retorna la info de las tablas usurio y persona
+ */
+app.post('/api/info-user', cors(), function (req, res, next) {
+  console.log(req.body.idUsuario)
+  const query = `SELECT Nombre, Apellidos, Nombre_Usuario, Celular, Sexo, Numero_Identidad, Correo  FROM Usuario
+                INNER JOIN Persona 
+                ON Persona_idPersona = idPersona
+                WHERE idUsuario = ?`
+  db.query(query, [req.body.idUsuario],
+    function (err, result) {
+     respuestaItems(err, result, res)
+    })
+})
+
+app.post('/api/menusRestaurante', cors(), function(req,res,next){
+  const query = `SELECT * FROM menu 
+  INNER JOIN restaurante ON menu.Restaurante_idRestaurante = restaurante.idRestaurante
+  WHERE restaurante.idRestaurante = ?`
+  db.query(query, [req.body.idRestaurante], function(err,result){
+    respuestaItems(err,result,res)
+  })
+})
+
+/** CVásquez@17MAR2020
+ *Retorna todos los menus y el restaurante al que pertenecen y el dueño del restaurante
+ */
+app.get('/api/admin_global_menus_restaurante', cors(), function (req, res, next) {
+  const query = `SELECT idMenu, Tipo_Menu as Nombre_Menu, Fecha_Registro, Foto_Menu, idCategoria, Nombre_Local, Nombre_Usuario as Dueño_Local FROM Menu INNER JOIN Restaurante
+            ON Restaurante_idRestaurante = idRestaurante
+            INNER JOIN Usuario
+            ON idUsuario = Usuario_idUsuario`
+  db.query(query,
+    function (err, result) {
+      respuestaItems(err, result, res)
+    })
+})
+
+app.post('/api/platillosRestaurante', cors(), function(req,res,next){
+  const query = `SELECT * FROM platillo 
+  INNER JOIN menu ON platillo.Menu_idMenu = menu.idMenu
+  INNER JOIN restaurante ON menu.Restaurante_idRestaurante = restaurante.idRestaurante
+  WHERE restaurante.idRestaurante = ?`
+  db.query(query, [req.body.idRestaurante], function(err, result){
+    respuestaItems(err,result,res)
+  })
+})
+/** CVásquez@17MAR2020
+ *Retorna todos los platillos que pertenecen a un menu a si como también
+ el que pertenecen y el restaurante
+ */
+app.get('/api/admin_global_platillos_menu', cors(), function(req, res, next) {
+  const query = `SELECT * FROM Platillo INNER JOIN Menu
+            ON Menu_idMenu = idMenu
+            INNER JOIN Restaurante
+            ON idRestaurante = Restaurante_idRestaurante;`
+  db.query(query, 
+    function(err, result) {
+      respuestaItems(err, result, res)
+    })
+})
+
+/** CVásquez@17MAR2020
+ * Recibe como parametros del JSON:
+ *      idUsuario,rolUsuario nombreRestaurante, telefono, correo, ubicacion
+ * el data.success llevará el mensaje de éxito o fracaso 
+ */
+app.post('/api/insert-restaurante', cors(), function (req, res, next) {
+  const query = `CALL SP_INSERT_RESTAURANTE(?, ?, ?, ?, ?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
+  db.query(query, [req.body.idUsuario, req.body.rolUsuario, req.body.nombreRestaurante, req.body.telefono, req.body.correo, req.body.ubicacion], 
+    function (err, result) {
+      respuestaSuccess(err, result, res)
+    })
+})
+
+
+
+
+/***************************Servicios admin global**************************** */
+/**CVásquez@18MAR2020
+ * Retorna todos las solicitudes, de registro de restaurantes, existentes
+ */
+app.get('/api/admin_global_mostrar_solicitudes', cors(), function (req, res, next) {
+  const query = `SELECT * FROM solicitud INNER JOIN restaurante ON Restaurante_idRestaurante = idRestaurante`
+  db.query(query,
+    function (err, result) {
+      respuestaItems(err, result, res)
+    })
+})
+
+/**
+* CVasquez@28Mar2020
+*Si el mensaje está null entonces el usuario se registro correctamente, sino entonces el mensaje
+*no estará vacio.
+*/
+app.post('/api/admin_global_insertar_usuario', cors(), function (req, res, next) {
+  const query = `CALL SP_INSERTAR_USUARIO(?,?,?,?,?,?,?,?,@Mensaje);Select @Mensaje as mensaje`;
+  db.query(query, [req.body.nombre, req.body.apellido, req.body.celular, req.body.sexo, req.body.numeroIdentidad, req.body.nombreUsuario, req.body.contrasena, req.body.correo],
+    function (err, result) {
+      respuestaError(err, result, res)
+    }
+
+  );
+});
+
+/**
+ * CVasquez@30Mar2020
+ *
+{
+  "idRestaurante":
+}
+ */
+app.post('/api/admin_global_eliminar_restaurante', cors(), function (req, res, next) {
+  const query = `CALL SP_ADMIN_ELIMINAR_LOCAL(?, @Mensaje); SELECT @Mensaje AS mensaje`
+  db.query(query, [req.body.idRestaurante],
+    function (err, result) {
+      respuestaError(err, result, res)
+    })
+})
+
+/**
+{
+  "idUsuario": 
+}
+ */
+/**
+ * CVasquez@28Mar2020
+ * Eliminar usuarios desde la página de admin usuarios, mensaje = null : se borró el usuario
+ */
+app.post('/api/admin_global_eliminar_usuario', cors(), function (req, res, next) {
+  const query = `CALL SP_ELIMINAR_USUARIO(?, @Mensaje); SELECT @Mensaje AS mensaje`
+  db.query(query, [req.body.idUsuario],
+    function (err, result){
+      respuestaError(err, result, res)
+    })
+})
+
+
+/**CVásquez@18MAR2020
+ * Retorna las solicitudes que tengan el estadoSolicitud igual al recibido
+ * json: {estadoSolicitud: ("En espera", "Aprobada" o "Denegada")}
+ */
+app.post('/api/admin_gobal_solicitud_filtro_estado', cors(), function (req, res, next) {
+  const query = `SELECT * FROM solicitud INNER JOIN restaurante ON Restaurante_idRestaurante = idRestaurante
+                WHERE EstadoSolicitud = ?`
+  db.query(query, [req.body.estadoSolicitud],
+    function (err, result) {
+      respuestaItems(err, result, res)
+    })
+})
+// CRUD PARA MENÚS
+
+/**
+ * `(
+{
+"nombreMenu": ,
+"idRestaurante": ,
+"foto":  ,
+"idCategoria": 
+}
+ */
+
+
+app.post('/api/admin_global_agregar_menu', cors(), function (req, res, next) {
+  console.log('recibido')
+  const query = `CALL SP_INSERTAR_MENU(?, ?, ?, ?, @Mensaje); SELECT @Mensaje AS mensaje`
+  db.query(query, [req.body.nombreMenu, req.body.idRestaurante, req.body.foto, req.body.idCategoria], 
+    function (err, result) {
+      respuestaError(err, result, res)
+    })
+})
+/**
+ * {
+ * "idMenu": ,
+ * "nombre": ,
+ * "foto": 
+ * }
+ */
+app.post('/api/admin_global_editar_menu', cors(), function (req, res, next) {
+  const query = `CALL SP_ADMIN_EDITAR_MENU(?, ?, ?, @Mensaje); SELECT @Mensaje AS mensaje;`
+  db.query(query, [req.body.idMenu, req.body.nombre, req.body.foto], 
+    function (err, result) {
+      respuestaError(err, result, res)
+    })
+})
+/**{
+ * "idMenu":
+ * } */
+app.post('/api/admin_global_borrar_menu', cors(), function (req, res, next) {
+  const query = `CALL SP_ELIMINAR_MENU(?, @Mensaje); SELECT @Mensaje AS mensaje`
+  db.query(query, [req.body.idMenu], 
+    function (err, result) {
+      respuestaError(err, result, res)
+    })
+})
+
+// CRUD PARA PLATILLOS
+/**
+ * 
+    {
+      
+      "idMenu" , 
+      "nombre" ,
+      "descripcion" , 
+      "precio" , 
+      "tipoPlatillo" 
+    }
+)
+ */
+app.post('/api/admin_global_agregar_platillo', cors(), function (req, res, next) {
+  const query = `CALL SP_INSERTAR_PLATILLO(?, ?, ?, ?, ?, @Mensaje); SELECT @Mensaje AS mensaje`
+  db.query(query, [req.body.descripcion, req.body.idMenu, req.body.nombre, req.body.precio, req.body.tipoPlatillo],
+    function (err, result) {
+      respuestaError(err, result, res)
+    })
+})
+
+/**
+ *
+{   
+  "idPlatillo":  , 
+  "nombre":  , 
+  "descripcion":  , 
+  "precio": , 
+  "idTipoPlatillo": 
+}
+ */
+app.post('/api/admin_global_editar_platillo', cors(), function (req, res, next) {
+  const query = `CALL SP_EDITAR_PLATILLO(?, ?, ?, ?, ?, @Mensaje); SELECT @Mensaje AS mensaje`
+  db.query(query, [req.body.idPlatillo, req.body.nombre, req.body.descripcion, req.body.precio, req.body.idTipoPlatillo], 
+    function (err, result) {
+      respuestaError(err, result, res)
+    })
+})
+/**
+ * {
+ * "idPlatillo":
+ * }
+ */
+// error.affectedRows": si es igual a 1 entonces se logro borrar el platillo si es cero no se borró.
+app.post('/api/admin_global_borrar_platillo', cors(), function (req, res, next) {
+  const query = `DELETE FROM platillo WHERE idPlatillo = ?`
+  db.query(query, [req.body.idPlatillo],
+    function (err, result) {
+      respuestaError(err, result, res)
+    })
+})
+
+/******************************************************************************** */
+
+/**
+ * 
+ * <!---Estándar a usar cuando la respuesta no incluye datos
+ *  Solo mensaje de exíto o fallo en la petición --->
+ */
+
+function respuestaSuccess(err, result,res) {
+  let resultado = jsonResult
+  if (err) resultado.error = err;
+  if (result == undefined) {
+    resultado.success = null
+    res.send(resultado)
+  } else {
+    resultado.success = result
+    resultado.error = null
+    res.send(resultado)
+  }
+}
+
+function respuestaError(err, result, res){
+  let resultado = jsonResult
+  if (err) resultado.error = err;
+  if (result == undefined) {
+    resultado.error = null
+    res.send(resultado)
+  } else {
+    resultado.error = result
+    res.send(resultado)
+  }
+
+}
+
+/**
+ * 
+ *Estándar a usar para cuando la respuesta incluya datos
+ */
+function respuestaItems(err, result, res) {
+  let resultado = jsonResult
+  if (err) resultado.error = err;
+  if (result == undefined) {
+    resultado.items = null
+    res.send(resultado)
+  } else {
+    resultado.items = result
+    resultado.error = null
+    res. send(resultado)
+  }
+}
+
+/**--------------PRUEBAS----------------- */
+// CVásquez@18MAR2020
+// PRUEBA para verificar un jwt recibido desde frontend
+// BORRAR LUEGO 
+app.get('/datos', router, (req, res) => {
+  const datos = [
+    {
+      id: 1, nombre: "Carlos"
+    },
+    {
+      id: 2, nombre: "loquesea"
+    }
+  ]
+  res.json(datos)
+})
+
+// CVásquez@18MAR2020
 // JSON a recibir desde frontend
 // {
 //   "nombreUsuario": "manolo",
@@ -729,199 +1006,14 @@ app.post('/api/autenticar', cors(), (req, res) => {
   }
 })
 
-
-// PRUEBA para verificar un jwt recibido desde frontend
-// BORRAR LUEGO 
-app.get('/datos', router, (req, res) => {
-  const datos = [
-    {
-      id:1, nombre: "Carlos"
-    },
-    {
-      id:2, nombre: "loquesea"
-    }
-  ]
-  res.json(datos)
-})
-
-
-/** CVásquez@17MAR2020
- *Obtener la información del usuario que ya está debidamente logueado
- *Se recibe desde frontend el idUsuario
- *Se retorna la info de las tablas usurio y persona
- */
-app.post('/api/info-user', cors(), function (req, res, next) {
-  console.log(req.body.idUsuario)
-  const query = `SELECT Nombre, Apellidos, Nombre_Usuario, Celular, Sexo, Numero_Identidad, Correo  FROM Usuario
-                INNER JOIN Persona 
-                ON Persona_idPersona = idPersona
-                WHERE idUsuario = ?`
-  db.query(query, [req.body.idUsuario],
+/**PRUEBA: Si no existe el usuario la propiedad item irà vacìa, de lo contrario, llevarà una row */
+app.post('/api/validarUsuario', cors(), function (req, res, next) {
+  const query = 'SELECT "" FROM Usuario WHERE Nombre_Usuario = ? AND Contrasena = ?'
+  db.query(query, [req.body.nombreUsuario, req.body.contrasena],
     function (err, result) {
-      let resultado = jsonResult
-      if (err) resultado.error = err;
-      if (result == undefined) {
-        resultado.items = null
-        res.send(resultado);
-      } else {
-        resultado.error = null
-        resultado.items = result
-        res.send(resultado)
-      }
+      res.send(result)
     })
 })
-
-app.post('/api/menusRestaurante', cors(), function(req,res,next){
-  const query = `SELECT * FROM menu 
-  INNER JOIN restaurante ON menu.Restaurante_idRestaurante = restaurante.idRestaurante
-  WHERE restaurante.idRestaurante = ?`
-  db.query(query, [req.body.idRestaurante], function(err,result){
-    respuestaItems(err,result,res)
-  })
-})
-
-/** CVásquez@17MAR2020
- *Retorna todos los menus y el restaurante al que pertenecen y el dueño del restaurante
- */
-app.get('/api/menusRestaurantesPropietarios', cors(), function (req, res, next) {
-  const query = `SELECT idMenu, Tipo_Menu as Nombre_Menu, Fecha_Registro, Foto_Menu, idCategoria, Nombre_Local, Nombre_Usuario as Dueño_Local FROM Menu INNER JOIN Restaurante
-            ON Restaurante_idRestaurante = idRestaurante
-            INNER JOIN Usuario
-            ON idUsuario = Usuario_idUsuario`
-  db.query(query,
-    function (err, result) {
-      respuestaItems(err, result, res)
-      // let resultado = jsonResult
-      // if (err) resultado.error = err;
-      // if (result == undefined) {
-      //   resultado.items = null;
-      //   res.send(resultado);
-      // } else {
-      //   resultado.error = null;
-      //   resultado.items = result;
-      //   res.send(resultado);
-      // }
-
-    })
-})
-
-app.post('/api/platillosRestaurante', cors(), function(req,res,next){
-  const query = `SELECT * FROM platillo 
-  INNER JOIN menu ON platillo.Menu_idMenu = menu.idMenu
-  INNER JOIN restaurante ON menu.Restaurante_idRestaurante = restaurante.idRestaurante
-  WHERE restaurante.idRestaurante = ?`
-  db.query(query, [req.body.idRestaurante], function(err, result){
-    respuestaItems(err,result,res)
-  })
-})
-/** CVásquez@17MAR2020
- *Retorna todos los platillos y  menus al que pertenecen y el restaurante
- */
-app.get('/api/platilloMenuRestaurante', cors(), function(req, res, next) {
-  const query = `SELECT * FROM Platillo INNER JOIN Menu
-            ON Menu_idMenu = idMenu
-            INNER JOIN Restaurante
-            ON idRestaurante = Restaurante_idRestaurante;`
-  db.query(query, 
-    function(err, result) {
-      respuestaItems(err, result, res)
-      // let resultado = jsonResult
-      // if (err) resultado.error = err;
-      // if (result == undefined) {
-      //   resultado.items = null;
-      //   res.send(resultado);
-      // } else {
-      //   resultado.error = null;
-      //   resultado.items = result;
-      //   res.send(resultado);
-      // }
-
-    })
-})
-
-/** CVásquez@17MAR2020
- * Recibe como parametros del JSON:
- *      idUsuario,rolUsuario nombreRestaurante, telefono, correo, ubicacion
- * el data.success llevará el mensaje de éxito o fracaso 
- */
-app.post('/api/insert-restaurante', cors(), function (req, res, next) {
-  const query = `CALL SP_INSERT_RESTAURANTE(?, ?, ?, ?, ?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
-  db.query(query, [req.body.idUsuario, req.body.rolUsuario, req.body.nombreRestaurante, req.body.telefono, req.body.correo, req.body.ubicacion], 
-    function (err, result) {
-      respuestaSuccess(err, result, res)
-      // let resultado = jsonResult
-      // if (err) resultado.error = err;
-      // if (result == undefined) {
-      //   resultado.success = null
-      //   res.send(resultado)
-      // } else {
-      //   resultado.error = null
-      //   resultado.success = result
-      //   res.send(resultado)
-      // }
-    })
-})
-
-/**CVásquez@18MAR2020
- * Retorna todos las solicitudes, de registro de restaurantes, existentes
- */
-app.get('/api/solicitudes', cors(), function (req, res, next) {
-  const query = `SELECT * FROM solicitud INNER JOIN restaurante ON Restaurante_idRestaurante = idRestaurante`
-  db.query(query, 
-    function (err, result) {
-      respuestaItems(err, result, res)
-    })
-})
-
-/**CVásquez@18MAR2020
- * Retorna las solicitudes que tengan el estadoSolicitud igual al recibido
- * json: {estadoSolicitud: ("En espera", "Aprobada" o "Denegada")}
- */
-app.post('/api/filtro-solicitud', cors(), function(req, res, next) {
-  const query = `SELECT * FROM solicitud INNER JOIN restaurante ON Restaurante_idRestaurante = idRestaurante
-                WHERE EstadoSolicitud = ?`
-  db.query(query, [req.body.estadoSolicitud], 
-    function (err, result) {
-      respuestaItems(err, result, res)
-    })
-})
-
-
-/**
- * 
- * <!---Estándar a usar cuando la respuesta no incluye datos
- *  Solo mensaje de exíto o fallo en la petición --->
- */
-
-function respuestaSuccess(err, result,res) {
-  let resultado = jsonResult
-  if (err) resultado.error = err;
-  if (result == undefined) {
-    resultado.success = null
-    res.send(resultado)
-  } else {
-    resultado.success = result
-    resultado.error = null
-    res.send(resultado)
-  }
-}
-
-/**
- * 
- *Estándar a usar para cuando la respuesta incluya datos
- */
-function respuestaItems(err, result, res) {
-  let resultado = jsonResult
-  if (err) resultado.error = err;
-  if (result == undefined) {
-    resultado.items = null
-    res.send(resultado)
-  } else {
-    resultado.items = result
-    resultado.error = null
-    res. send(resultado)
-  }
-}
 
 /**
  * Servicio para eliminar menús: LISTO
