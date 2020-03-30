@@ -758,6 +758,7 @@ app.post('/api/admin_global_eliminar_restaurante', cors(), function (req, res, n
  */
 /**
  * CVasquez@28Mar2020
+ * Eliminar usuarios desde la página de admin usuarios, mensaje = null : se borró el usuario
  */
 app.post('/api/admin_global_eliminar_usuario', cors(), function (req, res, next) {
   const query = `CALL SP_ELIMINAR_USUARIO(?, @Mensaje); SELECT @Mensaje AS mensaje`
@@ -767,20 +768,6 @@ app.post('/api/admin_global_eliminar_usuario', cors(), function (req, res, next)
     })
 })
 
-
-/**
- * CVasquez@28Mar2020
- * Eliminar usuarios desde la página de admin usuarios, mensaje = null : se borró el usuario
- */
-app.post('/api/admin_global_eliminar_usuario', cors(), function (req, res, next) {
-  console.log(req.body.idUsuario)
-  const query = `CALL SP_ELIMINAR_USUARIO(?, @Mensaje); SELECT @Mensaje AS mensaje`
-  db.query(query, [req.body.idUsuario],
-    function (err, result) {
-      console.log(result)
-      respuestaError(err, result, res)
-    })
-})
 
 /**CVásquez@18MAR2020
  * Retorna las solicitudes que tengan el estadoSolicitud igual al recibido
