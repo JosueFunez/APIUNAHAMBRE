@@ -237,14 +237,20 @@ app.get('/api/menus', cors(), function (req, res, next) {
   db.query(query,
     function (err, result) {
       respuestaItems(err, result, res)
-      // let resultado = jsonResult;
-      // resultado.items = result
-
-      // res.send(resultado)
+     
     }
     )
 });
 
+app.get('/api/tipo-platillos', cors(), function(req,res,next){
+  const query = `SELECT * FROM tipo_platillo`;
+  db.query(query,
+    function (err, result) {
+      respuestaItems(err, result, res)
+    }
+    )
+
+})
 
 
 /** CVasquez@04MAR2020
@@ -364,8 +370,8 @@ var transporter = nodemailer.createTransport({
   host: 'smtp.ethereal.email',
   port: 587,
   auth: {
-    user: 'nathan.moore57@ethereal.email',
-    pass: 'ZvkZS84TVCHAFumB2r'
+    user: 'edd.leannon63@ethereal.email',
+    pass: 'ZKUbPQNv8crwmEwT9J'
   }
 });
 app.post('/api/checkcorreo', cors(), function (req, res, next) {
@@ -765,6 +771,15 @@ app.post('/api/info-user', cors(), function (req, res, next) {
     })
 })
 
+app.post('/api/menusRestaurante', cors(), function(req,res,next){
+  const query = `SELECT * FROM menu 
+  INNER JOIN restaurante ON menu.Restaurante_idRestaurante = restaurante.idRestaurante
+  WHERE restaurante.idRestaurante = ?`
+  db.query(query, [req.body.idRestaurante], function(err,result){
+    respuestaItems(err,result,res)
+  })
+})
+
 /** CVásquez@17MAR2020
  *Retorna todos los menus y el restaurante al que pertenecen y el dueño del restaurante
  */
@@ -790,6 +805,15 @@ app.get('/api/menusRestaurantesPropietarios', cors(), function (req, res, next) 
     })
 })
 
+app.post('/api/platillosRestaurante', cors(), function(req,res,next){
+  const query = `SELECT * FROM platillo 
+  INNER JOIN menu ON platillo.Menu_idMenu = menu.idMenu
+  INNER JOIN restaurante ON menu.Restaurante_idRestaurante = restaurante.idRestaurante
+  WHERE restaurante.idRestaurante = ?`
+  db.query(query, [req.body.idRestaurante], function(err, result){
+    respuestaItems(err,result,res)
+  })
+})
 /** CVásquez@17MAR2020
  *Retorna todos los platillos y  menus al que pertenecen y el restaurante
  */
