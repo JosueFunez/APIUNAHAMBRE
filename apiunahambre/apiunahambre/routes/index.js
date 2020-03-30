@@ -735,6 +735,22 @@ app.post('/api/admin_global_insertar_usuario', cors(), function (req, res, next)
 
   );
 });
+
+/**
+ * CVasquez@30Mar2020
+ *
+{
+  "idRestaurante":
+}
+ */
+app.post('/api/admin_global_eliminar_restaurante', cors(), function (req, res, next) {
+  const query = `CALL SP_ADMIN_ELIMINAR_LOCAL(?, @Mensaje); SELECT @Mensaje AS mensaje`
+  db.query(query, [req.body.idRestaurante],
+    function (err, result) {
+      respuestaError(err, result, res)
+    })
+})
+
 /**
 {
   "idUsuario": 
