@@ -738,7 +738,11 @@ app.post('/api/insert-restaurante', cors(), function (req, res, next) {
  * Retorna todos las solicitudes, de registro de restaurantes, existentes
  */
 app.get('/api/admin_global_mostrar_solicitudes', cors(), function (req, res, next) {
-  const query = `SELECT * FROM solicitud INNER JOIN restaurante ON Restaurante_idRestaurante = idRestaurante`
+  const query = `SELECT idsolicitud, Restaurante_idRestaurante, Descripcion, EstadoSolicitud,
+FechaSolicitud, idRestaurante, Nombre_Local, Telefono, Correo, Ubicacion, EstadoRestaurante,
+Usuario_idUsuario, Nombre_Usuario
+FROM solicitud INNER JOIN restaurante ON Restaurante_idRestaurante = idRestaurante
+                  INNER JOIN usuario ON Usuario_idUsuario = idUsuario;`
   db.query(query,
     function (err, result) {
       respuestaItems(err, result, res)
