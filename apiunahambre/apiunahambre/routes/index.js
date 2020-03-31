@@ -107,7 +107,6 @@ app.listen(app.get('port'), function () {
  */
 router.use((req, res, next) => {
   const token = req.headers['access-token'];
-
   if (token) {
     jwt.verify(token, app.get('llave'), (err, decoded) => {
       if (err) {
@@ -123,10 +122,7 @@ router.use((req, res, next) => {
       mensaje: 'token no proveida.'
     })
   }
-
 })
-
-
 /**
 * CVasquez@02Mar2020
 *Si el mensaje está vacio entonces el usuario se registro correctamente, sino entonces el mensaje
@@ -294,15 +290,18 @@ app.post('/api/login', cors(), function (req, res, next) {
       } else {
         resultado.error = null
         resultado.items = result
+        console.log('Este es el rol del usuario: ', resultado.items[4][0].Rol )
 
         if (resultado.items[2][0].usuario != undefined ) {
           const payload = {
             check: true,
-            nombreUsuario: resultado.items[2][0].usuario,
-            idUsuario: resultado.items[1][0].id
+            Usuario: resultado.items[2][0].usuario,
+            id: resultado.items[1][0].id,
+            rol: resultado.items[4][0].Rol
+
           }
           const token = jwt.sign(payload, app.get('llave'), {
-            expiresIn: 1440
+            expiresIn: 60 * 60 * 24
           })
           resultado.item = token
           res.send(resultado)
@@ -411,13 +410,15 @@ app.post('/api/checkcorreo', cors(), function (req, res, next) {
 /** CVásquez@08MAR2020
  * Devuelve toda la información de usuarios y persona en la DB.
  */
-app.get('/api/admin_global_mostrar_usuarios', cors(), function (req, res, next) {
-  console.log("recibido")
-  const query = `SELECT * FROM Usuario INNER JOIN Persona ON idPersona = Persona_idPersona`;
-  db.query(query,
-    function (err, result) {
-      respuestaItems(err, result, res)
-    })
+app.get('/api/admin_global_mostrar_usuarios', cors(), router, function (req, res, next) {
+  const { id, rol } = decodedJWT_admin_usuarios(req.headers['access-token'], res)
+  if (rol === 0) {
+    const query = `SELECT * FROM Usuario INNER JOIN Persona ON idPersona = Persona_idPersona`;
+    db.query(query,
+      function (err, result) {
+        respuestaItems(err, result, res)
+      })
+  }
 });
 
 
@@ -426,27 +427,21 @@ app.get('/api/admin_global_mostrar_usuarios', cors(), function (req, res, next) 
  * Si el parametro idRol es incorrecto, items estará vacio y error indicará que ese rol no existe.
  */
 // FILTRO USUARIO POR TIPO ROL
-app.post('/api/admin_global_usuario_filtro_rol', cors(), function (req, res, next) {
-  const query = `CALL SP_ADMIN_FILTRO_CLIENTES_ROL(?, @MENSAJE);`
-  db.query(query, [req.body.idRol], 
-    function (err, result) {
-      let resultado = jsonResult
-      if (err) resultado.error = err;
-      if (result == undefined) {
-        resultado.items = null;
-        res.send(resultado);
-      } else {
+app.post('/api/admin_global_usuario_filtro_rol', cors(),router ,function (req, res, next) {
+  const { id, rol } = decodedJWT_admin_usuarios(req.headers['access-token'], res)
+  if (rol === 0) {
+    const query = `CALL SP_ADMIN_FILTRO_CLIENTES_ROL(?, @MENSAJE);`
+    db.query(query, [req.body.idRol], 
+      function (err, result) {
         if (req.body.idRol > 2) {
+          let resultado = jsonResult
           resultado.error = 'No existe el rol ingresado'
           res.send(resultado)
-        }else{
-          resultado.error = err;
-          resultado.items = result;
-          res.send(resultado);
-        }
-      }
-      
-    })
+        } else {
+          respuestaItems(err, result, res)
+        }     
+      })
+  }
 })
 
 
@@ -509,25 +504,15 @@ app.put('/api/g-borrar-local', cors(), function (req, res, next) {
 * Recibe como parametros idMenu, nombreMenu y foto, dichos parametros pueden ser nulos si no se
 * desea cambiar algo del menú.
 */
-app.put('/api/admin_global_modificar_menus', cors(), function (req, res, next) {
-  const query = `CALL SP_ADMIN_EDITAR_MENU(?, ?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
-  db.query(query, [req.body.idMenu, req.body.nombreMenu, req.body.foto], 
-    function (err, result) {
-      let resultado = jsonResult
-      // resultado.error = result
-
-      if (err) resultado.error = err;
-      if (result == undefined) {
-        resultado.items = null;
-        res.send(resultado);
-      } else {
-        resultado.error = result;
-        resultado.items = null;
-        res.send(resultado);
-
-      }
-    })
-
+app.put('/api/admin_global_modificar_menus', cors(), router, function (req, res, next) {
+  const { id, rol } = decodedJWT_admin_usuarios(req.headers['access-token'], res)
+  if (rol === 0) {
+    const query = `CALL SP_ADMIN_EDITAR_MENU(?, ?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
+    db.query(query, [req.body.idMenu, req.body.nombreMenu, req.body.foto], 
+      function (err, result) {
+       respuestaError(err, result, res)
+      })
+  }
 })
 /**Robindroide
 MODIFICAR PLATILLOS PARA ADMIN
@@ -551,21 +536,15 @@ app.put('/api/admin_local_modificar-platillo', cors(), function (req, res, next)
 /**Robindroide
 MODIFICAR RESTAURANTE
 */
-app.put('/api/admin_global_modificar-local', cors(), function (req, res, next) {
-  const query = `CALL SP_ADMIN_EDITAR_RESTAURANTE(?, ?, ?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
-  db.query(query, [req.body.nombreRestaurante, req.body.telefono, req.body.ubicacion, req.body.idUsuario], 
-    function (err, result) {
-      let resultado = jsonResult
-      if (err) resultado.error = err;
-      if (result == undefined) {
-        resultado.items = null;
-        res.send(resultado);
-      } else {
-        resultado.error = result;
-        resultado.items = null;
-        res.send(resultado);
-      }
-    })
+app.put('/api/admin_global_modificar-local', cors(), router, function (req, res, next) {
+  const { id, rol } = decodedJWT_admin_usuarios(req.headers['access-token'], res)
+  if (rol === 0) {
+    const query = `CALL SP_ADMIN_EDITAR_RESTAURANTE(?, ?, ?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
+    db.query(query, [req.body.nombreRestaurante, req.body.telefono, req.body.ubicacion, req.body.idUsuario], 
+      function (err, result) {
+        respuestaError(err, result, res)
+      })
+  }
 })
 /**Robindroide
 * Eliminar un platillo, recibe el idPlatillo*/
@@ -641,16 +620,19 @@ app.put('/api/cambiar-info-usuario', cors(), function (req, res, next) {
  * Ruta exclusiva para página de admin usuarios
  * en success irá la respuesta si mensaje está null todo funciono correctamente sino hubo algun error y el cambio no se hizo
  */
-app.post('/api/admin_global_editar_usuario', cors(), function (req, res, next) {
-  if (req.body.usuario == "") req.body.usuario = null;
-  if (req.body.nombre == "") req.body.nombre = null;
-  if (req.body.apellido == "") req.body.apellido = null;
-  const query = `CALL SP_ADMIN_EDITAR_USUARIO(?, ?, ?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
-  db.query(query, [req.body.idUsuario, req.body.usuario, req.body.nombre, req.body.apellido],
-
-    function (err, result) {
-      respuestaSuccess(err, result, res)
-    })
+app.post('/api/admin_global_editar_usuario', cors(),router , function (req, res, next) {
+  const { id, rol } = decodedJWT_admin_usuarios(req.headers['access-token'], res)
+  if (rol === 0) {
+    if (req.body.usuario == "") req.body.usuario = null;
+    if (req.body.nombre == "") req.body.nombre = null;
+    if (req.body.apellido == "") req.body.apellido = null;
+    const query = `CALL SP_ADMIN_EDITAR_USUARIO(?, ?, ?, ?, @MENSAJE); SELECT @MENSAJE AS mensaje;`
+    db.query(query, [req.body.idUsuario, req.body.usuario, req.body.nombre, req.body.apellido],
+  
+      function (err, result) {
+        respuestaSuccess(err, result, res)
+      })
+  }
 })
 
 /** CVásquez@17MAR2020
@@ -682,15 +664,18 @@ app.post('/api/menusRestaurante', cors(), function(req,res,next){
 /** CVásquez@17MAR2020
  *Retorna todos los menus y el restaurante al que pertenecen y el dueño del restaurante
  */
-app.get('/api/admin_global_menus_restaurante', cors(), function (req, res, next) {
-  const query = `SELECT idMenu, Tipo_Menu as Nombre_Menu, Fecha_Registro, Foto_Menu, idCategoria, Nombre_Local, Nombre_Usuario as Dueño_Local FROM Menu INNER JOIN Restaurante
-            ON Restaurante_idRestaurante = idRestaurante
-            INNER JOIN Usuario
-            ON idUsuario = Usuario_idUsuario`
-  db.query(query,
-    function (err, result) {
-      respuestaItems(err, result, res)
-    })
+app.get('/api/admin_global_menus_restaurante', cors(), router, function (req, res, next) {
+  const { id, rol } = decodedJWT_admin_usuarios(req.headers['access-token'], res)
+  if (rol === 0) {
+    const query = `SELECT idMenu, Tipo_Menu as Nombre_Menu, Fecha_Registro, Foto_Menu, idCategoria, Nombre_Local, Nombre_Usuario as Dueño_Local FROM Menu INNER JOIN Restaurante
+              ON Restaurante_idRestaurante = idRestaurante
+              INNER JOIN Usuario
+              ON idUsuario = Usuario_idUsuario`
+    db.query(query,
+      function (err, result) {
+        respuestaItems(err, result, res)
+      })
+  }
 })
 
 app.post('/api/platillosRestaurante', cors(), function(req,res,next){
@@ -706,15 +691,18 @@ app.post('/api/platillosRestaurante', cors(), function(req,res,next){
  *Retorna todos los platillos que pertenecen a un menu a si como también
  el que pertenecen y el restaurante
  */
-app.get('/api/admin_global_platillos_menu', cors(), function(req, res, next) {
-  const query = `SELECT * FROM Platillo INNER JOIN Menu
-            ON Menu_idMenu = idMenu
-            INNER JOIN Restaurante
-            ON idRestaurante = Restaurante_idRestaurante;`
-  db.query(query, 
-    function(err, result) {
-      respuestaItems(err, result, res)
-    })
+app.get('/api/admin_global_platillos_menu', cors(), router, function(req, res, next) {
+  const { id, rol } = decodedJWT_admin_usuarios(req.headers['access-token'], res)
+  if (rol === 0) {
+    const query = `SELECT * FROM Platillo INNER JOIN Menu
+              ON Menu_idMenu = idMenu
+              INNER JOIN Restaurante
+              ON idRestaurante = Restaurante_idRestaurante;`
+    db.query(query, 
+      function(err, result) {
+        respuestaItems(err, result, res)
+      })
+  }
 })
 
 /** CVásquez@17MAR2020
@@ -737,31 +725,37 @@ app.post('/api/insert-restaurante', cors(), function (req, res, next) {
 /**CVásquez@18MAR2020
  * Retorna todos las solicitudes, de registro de restaurantes, existentes
  */
-app.get('/api/admin_global_mostrar_solicitudes', cors(), function (req, res, next) {
-  const query = `SELECT idsolicitud, Restaurante_idRestaurante, Descripcion, EstadoSolicitud,
-FechaSolicitud, idRestaurante, Nombre_Local, Telefono, Correo, Ubicacion, EstadoRestaurante,
-Usuario_idUsuario, Nombre_Usuario
-FROM solicitud INNER JOIN restaurante ON Restaurante_idRestaurante = idRestaurante
-                  INNER JOIN usuario ON Usuario_idUsuario = idUsuario;`
-  db.query(query,
-    function (err, result) {
-      respuestaItems(err, result, res)
-    })
-})
+app.get('/api/admin_global_mostrar_solicitudes', cors(),router , function (req, res, next) {
+  const { id, rol } = decodedJWT_admin_usuarios(req.headers['access-token'], res)
+   if (rol === 0) {
+      const query = `SELECT idsolicitud, Restaurante_idRestaurante, Descripcion, EstadoSolicitud,
+      FechaSolicitud, idRestaurante, Nombre_Local, Telefono, Correo, Ubicacion, EstadoRestaurante,
+      Usuario_idUsuario, Nombre_Usuario
+      FROM solicitud INNER JOIN restaurante ON Restaurante_idRestaurante = idRestaurante
+                        INNER JOIN usuario ON Usuario_idUsuario = idUsuario;`
+     db.query(query,
+       function (err, result) {
+         respuestaItems(err, result, res)
+       })
+   }
+  })
 
 /**
 * CVasquez@28Mar2020
 *Si el mensaje está null entonces el usuario se registro correctamente, sino entonces el mensaje
 *no estará vacio.
 */
-app.post('/api/admin_global_insertar_usuario', cors(), function (req, res, next) {
-  const query = `CALL SP_INSERTAR_USUARIO(?,?,?,?,?,?,?,?,@Mensaje);Select @Mensaje as mensaje`;
-  db.query(query, [req.body.nombre, req.body.apellido, req.body.celular, req.body.sexo, req.body.numeroIdentidad, req.body.nombreUsuario, req.body.contrasena, req.body.correo],
-    function (err, result) {
-      respuestaError(err, result, res)
-    }
-
-  );
+app.post('/api/admin_global_insertar_usuario', cors(), router, function (req, res, next) {
+  const { id, rol } = decodedJWT_admin_usuarios(req.headers['access-token'], res)
+  if (rol === 0) {
+    const query = `CALL SP_INSERTAR_USUARIO(?,?,?,?,?,?,?,?,@Mensaje);Select @Mensaje as mensaje`;
+    db.query(query, [req.body.nombre, req.body.apellido, req.body.celular, req.body.sexo, req.body.numeroIdentidad, req.body.nombreUsuario, req.body.contrasena, req.body.correo],
+      function (err, result) {
+        respuestaError(err, result, res)
+      }
+  
+    );
+  }
 });
 
 /**
@@ -771,12 +765,15 @@ app.post('/api/admin_global_insertar_usuario', cors(), function (req, res, next)
   "idRestaurante":
 }
  */
-app.post('/api/admin_global_eliminar_restaurante', cors(), function (req, res, next) {
-  const query = `CALL SP_ADMIN_ELIMINAR_LOCAL(?, @Mensaje); SELECT @Mensaje AS mensaje`
-  db.query(query, [req.body.idRestaurante],
-    function (err, result) {
-      respuestaError(err, result, res)
-    })
+app.post('/api/admin_global_eliminar_restaurante', cors(),router , function (req, res, next) {
+  const { id, rol } = decodedJWT_admin_usuarios(req.headers['access-token'], res)
+  if (rol === 0) {
+    const query = `CALL SP_ADMIN_ELIMINAR_LOCAL(?, @Mensaje); SELECT @Mensaje AS mensaje`
+    db.query(query, [req.body.idRestaurante],
+      function (err, result) {
+        respuestaError(err, result, res)
+      })
+  }
 })
 
 /**
@@ -788,12 +785,15 @@ app.post('/api/admin_global_eliminar_restaurante', cors(), function (req, res, n
  * CVasquez@28Mar2020
  * Eliminar usuarios desde la página de admin usuarios, mensaje = null : se borró el usuario
  */
-app.post('/api/admin_global_eliminar_usuario', cors(), function (req, res, next) {
-  const query = `CALL SP_ELIMINAR_USUARIO(?, @Mensaje); SELECT @Mensaje AS mensaje`
-  db.query(query, [req.body.idUsuario],
-    function (err, result){
-      respuestaError(err, result, res)
-    })
+app.post('/api/admin_global_eliminar_usuario', cors(),router , function (req, res, next) {
+  const { id, rol } = decodedJWT_admin_usuarios(req.headers['access-token'], res)
+  if (rol === 0) {
+    const query = `CALL SP_ELIMINAR_USUARIO(?, @Mensaje); SELECT @Mensaje AS mensaje`
+    db.query(query, [req.body.idUsuario],
+      function (err, result){
+        respuestaError(err, result, res)
+      })
+  }
 })
 
 
@@ -801,13 +801,16 @@ app.post('/api/admin_global_eliminar_usuario', cors(), function (req, res, next)
  * Retorna las solicitudes que tengan el estadoSolicitud igual al recibido
  * json: {estadoSolicitud: ("En espera", "Aprobada" o "Denegada")}
  */
-app.post('/api/admin_gobal_solicitud_filtro_estado', cors(), function (req, res, next) {
-  const query = `SELECT * FROM solicitud INNER JOIN restaurante ON Restaurante_idRestaurante = idRestaurante
-                WHERE EstadoSolicitud = ?`
-  db.query(query, [req.body.estadoSolicitud],
-    function (err, result) {
-      respuestaItems(err, result, res)
-    })
+app.post('/api/admin_gobal_solicitud_filtro_estado', cors(),router, function (req, res, next) {
+  const { id, rol } = decodedJWT_admin_usuarios(req.headers['access-token'], res)
+  if (rol === 0) {
+    const query = `SELECT * FROM solicitud INNER JOIN restaurante ON Restaurante_idRestaurante = idRestaurante
+                  WHERE EstadoSolicitud = ?`
+    db.query(query, [req.body.estadoSolicitud],
+      function (err, result) {
+        respuestaItems(err, result, res)
+      })
+  }
 })
 // CRUD PARA MENÚS
 
@@ -822,13 +825,15 @@ app.post('/api/admin_gobal_solicitud_filtro_estado', cors(), function (req, res,
  */
 
 
-app.post('/api/admin_global_agregar_menu', cors(), function (req, res, next) {
-  console.log('recibido')
-  const query = `CALL SP_INSERTAR_MENU(?, ?, ?, ?, @Mensaje); SELECT @Mensaje AS mensaje`
-  db.query(query, [req.body.nombreMenu, req.body.idRestaurante, req.body.foto, req.body.idCategoria], 
-    function (err, result) {
-      respuestaError(err, result, res)
-    })
+app.post('/api/admin_global_agregar_menu', cors(),router , function (req, res, next) {  
+  const { id, rol } = decodedJWT_admin_usuarios(req.headers['access-token'], res)
+  if (rol === 0) {
+    const query = `CALL SP_INSERTAR_MENU(?, ?, ?, ?, @Mensaje); SELECT @Mensaje AS mensaje`
+    db.query(query, [req.body.nombreMenu, req.body.idRestaurante, req.body.foto, req.body.idCategoria], 
+      function (err, result) {
+        respuestaError(err, result, res)
+      })
+  }
 })
 /**
  * {
@@ -837,22 +842,28 @@ app.post('/api/admin_global_agregar_menu', cors(), function (req, res, next) {
  * "foto": 
  * }
  */
-app.post('/api/admin_global_editar_menu', cors(), function (req, res, next) {
-  const query = `CALL SP_ADMIN_EDITAR_MENU(?, ?, ?, @Mensaje); SELECT @Mensaje AS mensaje;`
-  db.query(query, [req.body.idMenu, req.body.nombre, req.body.foto], 
-    function (err, result) {
-      respuestaError(err, result, res)
-    })
+app.post('/api/admin_global_editar_menu', cors(),router , function (req, res, next) {
+  const { id, rol } = decodedJWT_admin_usuarios(req.headers['access-token'], res)
+  if (rol === 0) {
+    const query = `CALL SP_ADMIN_EDITAR_MENU(?, ?, ?, @Mensaje); SELECT @Mensaje AS mensaje;`
+    db.query(query, [req.body.idMenu, req.body.nombre, req.body.foto], 
+      function (err, result) {
+        respuestaError(err, result, res)
+      })
+  }
 })
 /**{
  * "idMenu":
  * } */
-app.post('/api/admin_global_borrar_menu', cors(), function (req, res, next) {
-  const query = `CALL SP_ELIMINAR_MENU(?, @Mensaje); SELECT @Mensaje AS mensaje`
-  db.query(query, [req.body.idMenu], 
-    function (err, result) {
-      respuestaError(err, result, res)
-    })
+app.post('/api/admin_global_borrar_menu', cors(),router , function (req, res, next) {
+  const { id, rol } = decodedJWT_admin_usuarios(req.headers['access-token'], res)
+  if (rol === 0) {
+    const query = `CALL SP_ELIMINAR_MENU(?, @Mensaje); SELECT @Mensaje AS mensaje`
+    db.query(query, [req.body.idMenu], 
+      function (err, result) {
+        respuestaError(err, result, res)
+      })
+  }
 })
 
 // CRUD PARA PLATILLOS
@@ -868,12 +879,15 @@ app.post('/api/admin_global_borrar_menu', cors(), function (req, res, next) {
     }
 )
  */
-app.post('/api/admin_global_agregar_platillo', cors(), function (req, res, next) {
-  const query = `CALL SP_INSERTAR_PLATILLO(?, ?, ?, ?, ?, @Mensaje); SELECT @Mensaje AS mensaje`
-  db.query(query, [req.body.descripcion, req.body.idMenu, req.body.nombre, req.body.precio, req.body.tipoPlatillo],
-    function (err, result) {
-      respuestaError(err, result, res)
-    })
+app.post('/api/admin_global_agregar_platillo', cors(),router , function (req, res, next) {
+  const { id, rol } = decodedJWT_admin_usuarios(req.headers['access-token'], res)
+  if (rol === 0) {
+    const query = `CALL SP_INSERTAR_PLATILLO(?, ?, ?, ?, ?, @Mensaje); SELECT @Mensaje AS mensaje`
+    db.query(query, [req.body.descripcion, req.body.idMenu, req.body.nombre, req.body.precio, req.body.tipoPlatillo],
+      function (err, result) {
+        respuestaError(err, result, res)
+      })
+  }
 })
 
 /**
@@ -886,12 +900,15 @@ app.post('/api/admin_global_agregar_platillo', cors(), function (req, res, next)
   "idTipoPlatillo": 
 }
  */
-app.post('/api/admin_global_editar_platillo', cors(), function (req, res, next) {
-  const query = `CALL SP_EDITAR_PLATILLO(?, ?, ?, ?, ?, @Mensaje); SELECT @Mensaje AS mensaje`
-  db.query(query, [req.body.idPlatillo, req.body.nombre, req.body.descripcion, req.body.precio, req.body.idTipoPlatillo], 
-    function (err, result) {
-      respuestaError(err, result, res)
-    })
+app.post('/api/admin_global_editar_platillo', cors(),router , function (req, res, next) {
+  const { id, rol } = decodedJWT_admin_usuarios(req.headers['access-token'], res)
+  if (rol === 0) {
+    const query = `CALL SP_EDITAR_PLATILLO(?, ?, ?, ?, ?, @Mensaje); SELECT @Mensaje AS mensaje`
+    db.query(query, [req.body.idPlatillo, req.body.nombre, req.body.descripcion, req.body.precio, req.body.idTipoPlatillo], 
+      function (err, result) {
+        respuestaError(err, result, res)
+      })
+  }
 })
 /**
  * {
@@ -899,12 +916,15 @@ app.post('/api/admin_global_editar_platillo', cors(), function (req, res, next) 
  * }
  */
 // error.affectedRows": si es igual a 1 entonces se logro borrar el platillo si es cero no se borró.
-app.post('/api/admin_global_borrar_platillo', cors(), function (req, res, next) {
-  const query = `DELETE FROM platillo WHERE idPlatillo = ?`
-  db.query(query, [req.body.idPlatillo],
-    function (err, result) {
-      respuestaError(err, result, res)
-    })
+app.post('/api/admin_global_borrar_platillo', cors(),router , function (req, res, next) {
+  const { id, rol } = decodedJWT_admin_usuarios(req.headers['access-token'], res)
+  if (rol === 0) {
+    const query = `DELETE FROM platillo WHERE idPlatillo = ?`
+    db.query(query, [req.body.idPlatillo],
+      function (err, result) {
+        respuestaError(err, result, res)
+      })
+  }
 })
 
 /******************************************************************************** */
@@ -935,6 +955,8 @@ function respuestaError(err, result, res){
     resultado.error = null
     res.send(resultado)
   } else {
+    resultado.item = null
+    resultado.items = null
     resultado.error = result
     res.send(resultado)
   }
@@ -952,17 +974,38 @@ function respuestaItems(err, result, res) {
     resultado.items = null
     res.send(resultado)
   } else {
+    resultado.item = null
     resultado.items = result
     resultado.error = null
-    res. send(resultado)
+    res.send(resultado)
   }
+}
+
+
+// Sacar el id y rol del usuario que hace la petición. 
+function decodedJWT_admin_usuarios(token, res){
+  const token_decoded = jwt.verify(token, app.get('llave'))
+  const id = token_decoded.id
+  const rol = token_decoded.rol
+  if (rol != 0) {
+    let resultado = jsonResult
+    resultado.error = 'usuario no autorizado'
+    // 401 Unauthorized
+    res.status(401).send(resultado)
+    
+  }
+  return {id, rol}
 }
 
 /**--------------PRUEBAS----------------- */
 // CVásquez@18MAR2020
 // PRUEBA para verificar un jwt recibido desde frontend
 // BORRAR LUEGO 
-app.get('/datos', router, (req, res) => {
+app.get('/datos', router, (req, res, next) => {
+  // const token = req.headers['access-token'];
+  // const { id, rol } = decodedJWT(req.headers['access-token'])
+  // console.log('Este es el pinche id:', id)
+  // console.log('Este es el pinche rol: ', rol)
   const datos = [
     {
       id: 1, nombre: "Carlos"
