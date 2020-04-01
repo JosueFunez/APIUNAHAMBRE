@@ -279,6 +279,7 @@ app.get('/api/g_mostrar_platillos', cors(), function (req, res, next) {
 // POST PARA LOGIN
 app.post('/api/login', cors(), function (req, res, next) {
   const query = `CALL SP_LOGIN(?, ?, @id, @Usuario, @Mensaje); SELECT @id as id; SELECT @Usuario as usuario; SELECT @Mensaje as mensaje; SELECT Rol_idRol as Rol FROM Usuario_has_Rol WHERE Usuario_idUsuario = (SELECT @id as id);`;
+  // console.log(req.body.usuario, req.body.contrasena)
   db.query(query, [req.body.usuario, req.body.contrasena], 
     function (err, result) {
 
@@ -290,8 +291,8 @@ app.post('/api/login', cors(), function (req, res, next) {
       } else {
         resultado.error = null
         resultado.items = result
-        console.log('Este es el rol del usuario: ', resultado.items[4][0].Rol )
-
+        // console.log('Este es el rol del usuario: ', resultado.items[4][0].Rol )
+        // console.log(resultado.items[2][0].usuario)
         if (resultado.items[2][0].usuario != undefined ) {
           const payload = {
             check: true,
@@ -720,7 +721,7 @@ app.post('/api/insert-restaurante', cors(), function (req, res, next) {
 
 
 
-
+// CVásquez@18MAR2020
 /***************************Servicios admin global**************************** */
 /**CVásquez@18MAR2020
  * Retorna todos las solicitudes, de registro de restaurantes, existentes
@@ -927,7 +928,25 @@ app.post('/api/admin_global_borrar_platillo', cors(),router , function (req, res
   }
 })
 
+
 /******************************************************************************** */
+
+// CVásquez@1ABR2020
+// VERIFICAR LOS DATOS DE UN USUARIO CUANDO NAVEGA POR LAS PAGINAS
+app.post('/api/g_verficar_datos_de_usuario_logueado', cors(), router, function(req, res, next) {
+  const { id, rol } = decodedJWT_all_usuarios(req.headers['access-token'])
+if( (req.body.id === undefined) || (req.body.rol === undefined)) {
+  res.send({mensaje: 'error al verificar el usuario'})
+} else {
+  if((id == req.body.id) && (rol == req.body.rol)) {
+    res.send({mensaje: null})
+  } else {
+    res.send({ mensaje: 'error al verificar el usuario' })
+  }
+}
+
+})
+
 
 /**
  * 
@@ -981,8 +1000,8 @@ function respuestaItems(err, result, res) {
   }
 }
 
-
-// Sacar el id y rol del usuario que hace la petición. 
+// CVásquez@1ABR2020
+// Sacar el id y rol del usuario adminUsuario que la petición. 
 function decodedJWT_admin_usuarios(token, res){
   const token_decoded = jwt.verify(token, app.get('llave'))
   const id = token_decoded.id
@@ -996,62 +1015,17 @@ function decodedJWT_admin_usuarios(token, res){
   }
   return {id, rol}
 }
+// CVásquez@1ABR2020
+// Sacar el id y rol del usuario que hace la petición. 
+function decodedJWT_all_usuarios(token) {
+  const token_decoded = jwt.verify(token, app.get('llave'))
+  const id = token_decoded.id
+  const rol = token_decoded.rol
+  return { id, rol }
+}
+
 
 /**--------------PRUEBAS----------------- */
-// CVásquez@18MAR2020
-// PRUEBA para verificar un jwt recibido desde frontend
-// BORRAR LUEGO 
-app.get('/datos', router, (req, res, next) => {
-  // const token = req.headers['access-token'];
-  // const { id, rol } = decodedJWT(req.headers['access-token'])
-  // console.log('Este es el pinche id:', id)
-  // console.log('Este es el pinche rol: ', rol)
-  const datos = [
-    {
-      id: 1, nombre: "Carlos"
-    },
-    {
-      id: 2, nombre: "loquesea"
-    }
-  ]
-  res.json(datos)
-})
-
-// CVásquez@18MAR2020
-// JSON a recibir desde frontend
-// {
-//   "nombreUsuario": "manolo",
-//     "password": "holamundo"
-
-// }
-// PRueba para jwt 
-app.post('/api/autenticar', cors(), (req, res) => {
-  let resultado = jsonResult
-
-  if (req.body.nombreUsuario === "manolo" && req.body.password === "holamundo") {
-    const payload = {
-      check: true,
-      nombreUsuario: "Manolito01",
-      idUsuario: 23
-    }
-    const token = jwt.sign(payload, app.get('llave'), {
-      expiresIn: 1440
-    })
-    resultado.error = 'Autenticacion correcta'
-    resultado.item = token
-    res.send(resultado)
-    // res.json({
-    //   mensaje: 'Autenticacion correcta',
-    //   token: token
-    // })
-
-  } else {
-    // res.json({ mensaje: "Usuario o contraseña incorrectos"})
-    resultado.item = null
-    resultado.error = "Usuario o contraseña incorrectos"
-    res.send(resultado)
-  }
-})
 
 /**PRUEBA: Si no existe el usuario la propiedad item irà vacìa, de lo contrario, llevarà una row */
 app.post('/api/validarUsuario', cors(), function (req, res, next) {
