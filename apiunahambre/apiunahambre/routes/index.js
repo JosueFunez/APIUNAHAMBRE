@@ -7,6 +7,17 @@ var jsonResult = require('../models/result')
 var app = express()
 var bodyParser = require('body-parser')
 var db = require('../connection/conexion')
+const cloudinary  = require('cloudinary');
+const fs = require('fs-extra');
+
+/**Robindroide
+ * Credenciales de cloudinary
+*/
+cloudinary.config({
+  cloud_name: 'dkg9y8rh6',
+  api_key: '136891711785884',
+  api_secret: 'dI7OazasJmUiSg27rrtVSJUB0iM'
+});
 
 /** JFunez@20032020
  * Azure tiene una política en que dado un cierto tiempo en que una conexión no hace solicitudes fuerza su desconexión
@@ -173,17 +184,19 @@ app.post('/api/insertar-menu', function (req, res, next) {
   );
 });
 /**Robindroide 
-POST SUBIR IMAGEN*/
-app.post('/api/upload-profile-pic', (req, res) => {
+POST PARA SUBIR UNA IMAGEN DE PERFIL*/
+app.post('/api/upload-profile-pic', async (req, res) => {
   let file = req.file;
   const id = req.headers['idusuario'];
+  const result = await cloudinary.v2.uploader.upload(file.path);
   const query = `UPDATE Usuario SET Foto_Perfil = ? WHERE idUsuario = ?`;
-  db.query(query, [file.path, id],
+  db.query(query, [result.url, id],
       function (err, result) {
       console.log('Image Uploaded'); 
   });
-  res.send(file.path);
-  console.log(file.path);
+  await fs.unlink(file.path);
+  console.log(result.url);
+  res.send(result.url);
 });
 
 // FINAL Get Lista Restaurantes
